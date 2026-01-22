@@ -7,7 +7,7 @@ const INSTAGRAM_URL = 'https://www.instagram.com/zanova.zn/'
 export default function Landing() {
     return (
         <div
-            className="flex flex-col items-center justify-center min-h-[90px] gap-1 p-4 mt-32 ">
+            className="flex flex-col items-center justify-center min-h-[90px] gap-1 p-4 ">
 
             <motion.a
                 href={INSTAGRAM_URL}
