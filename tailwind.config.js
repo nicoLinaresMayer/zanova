@@ -6,6 +6,7 @@ module.exports = {
       fontFamily: {
         zanova: ["var(--font-zanova)"],
         times: ['"Times New Roman"', 'serif'],
+        ig:["var(--font-ig)"],
       },
       colors: {
         'light-black': '#161616',       // fondo negro
