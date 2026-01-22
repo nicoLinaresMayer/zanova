@@ -16,7 +16,7 @@ export default function Landing() {
                 whileHover={{
                     scale: 1.05
                 }}
-                className="flex items-center justify-center gap-2 mt-3 mb-8">
+                className="flex items-center justify-center gap-2 mt-5 mb-8">
                 <div className="flex flex-col">
                     <h2 className="text-xl font-bold text-center text-white">
                         Proximamente

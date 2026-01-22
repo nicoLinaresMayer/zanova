@@ -21,12 +21,11 @@ const igFont = localFont({
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es" className={`${zanovaFont.variable} ${igFont.variable}`}>
-<body className="flex items-center justify-center relative min-h-screen">
+<body className="flex items-center justify-center relative min-h-[100dvh] overflow-hidden">
   {/* Imagen de fondo */}
-  <img
-    src="/zanova_bg_2.jpg"
-    alt="Fondo difuminado"
-    className="fixed inset-0 w-full h-full object-cover filter blur-xs -z-10"
+   <div
+    className="fixed inset-0 -z-10 bg-cover bg-center"
+    style={{ backgroundImage: "url('/zanova_bg_2.jpg')" }}
   />
 
   {/* Overlay oscuro suave para mejorar contraste */}
