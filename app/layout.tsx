@@ -24,9 +24,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 <body className="flex items-center justify-center relative min-h-screen">
   {/* Imagen de fondo */}
   <img
-    src="/zanova_bg.png"
+    src="/zanova_bg_2.jpg"
     alt="Fondo difuminado"
-    className="fixed inset-0 w-full h-full object-cover filter blur-sm -z-10"
+    className="fixed inset-0 w-full h-full object-cover filter blur-xs -z-10"
   />
 
   {/* Overlay oscuro suave para mejorar contraste */}

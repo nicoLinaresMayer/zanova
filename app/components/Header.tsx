@@ -9,7 +9,7 @@ export default function Header() {
   return (
     <motion.header
       style={{ opacity }}
-      className="fixed top-0 left-0 w-full bg-white p-6 z-50 shadow-md"
+      className="fixed top-0 left-0 w-full bg-white p-4 z-50 shadow-md"
     >
       <h1 className="text-3xl font-bold text-center font-zanova text-light-black">Zanova</h1>
     </motion.header>
