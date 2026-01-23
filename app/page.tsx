@@ -1,8 +1,10 @@
 'use client'
 
 import {motion} from 'framer-motion'
+import Link from 'next/link'
 
 const INSTAGRAM_URL = 'https://www.instagram.com/zanova.zn/'
+
 
 export default function Landing() {
     return (
@@ -17,6 +19,8 @@ export default function Landing() {
                     scale: 1.05
                 }}
                 className="flex items-center justify-center gap-2 mt-5 mb-8">
+                    <Link href="/products">
+                   
                 <div className="flex flex-col">
                     <h2 className="text-xl font-bold text-center text-white">
                         Proximamente
@@ -24,6 +28,8 @@ export default function Landing() {
                     <h1 className="text-2xl font-bold text-center font-zanova text-white">Tienda Zanova</h1>
 
                 </div>
+
+                 </Link>
 
             </motion.a>
 

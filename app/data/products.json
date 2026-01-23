@@ -1,0 +1,42 @@
+[
+  {
+    "id": "prod-001",
+    "slug": "campera",
+    "name": "Campera",
+    "description": "Remera premium de algodón peinado, corte regular.",
+    "price": 18900,
+    "currency": "ARS",
+    "featured": true,
+    "images": [
+      "/images/campera.png"
+    ],
+    "sizes": ["S", "M", "L", "XL"],
+    "stock": {
+      "S": 10,
+      "M": 15,
+      "L": 8,
+      "XL": 5
+    },
+    "category": "remeras"
+  },
+    {
+    "id": "prod-002",
+    "slug": "campera",
+    "name": "Remera ZN Negra",
+    "description": "Remera premium de algodón peinado, corte regular.",
+    "price": 18900,
+    "currency": "ARS",
+    "featured": true,
+    "images": [
+      "/images/campera.png"
+    ],
+    "sizes": ["S", "M", "L", "XL"],
+    "stock": {
+      "S": 10,
+      "M": 15,
+      "L": 8,
+      "XL": 5
+    },
+    "category": "remeras"
+  }
+]
