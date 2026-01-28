@@ -1,7 +1,12 @@
-import ProductsClient from "./ProductsClient";
-import { getProducts } from "../../CMS/lib/getProducts"
-import ProductsSection from "../components/ProductsSection";
+import ProductsClient from "../components/ProductsClient";
+import { getProducts } from "@/CMS/lib/getProducts";
 
 export default async function ProductsPage() {
-return <ProductsSection />
+  const products = await getProducts();
+
+  return (
+    <section className="bg-white text-black">
+      <ProductsClient products={products} />
+    </section>
+  );
 }

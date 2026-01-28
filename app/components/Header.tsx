@@ -6,16 +6,14 @@ import {ShoppingCart, Mail} from "lucide-react"
 
 export default function Header() {
     const {scrollY} = useScroll()
-    const opacity = useTransform(scrollY, [
-        0, 100
-    ], [1, 0.9])
+    const opacity = useTransform(scrollY, [20, 90], [0, 1])
+  const height = useTransform(scrollY, [20, 90], ['0px', '56px'])
 
     return (
         <motion.header
-            style={{
-                opacity
-            }}
-            className="sticky top-0 z-50 h-16 bg-white shadow-md">
+              style={{ opacity, height }}
+      className="fixed top-0 left-0 w-full z-30 backdrop-blur-md transition-colors bg-white">
+
             <div className="flex items-center h-full px-4">
 
                 <div className="flex-1">
@@ -28,9 +26,6 @@ export default function Header() {
                 </div>
                <Link href="/">
                 <div className="flex-none text-center">
-                    <h1 className="text-3xl font-bold font-zanova text-black grow-3">
-                        Zanova
-                    </h1>
                 </div>
                 </Link>
 

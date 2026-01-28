@@ -4,6 +4,7 @@ import localFont from 'next/font/local'
 import {ReactNode} from 'react'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import { ScrollProvider } from '../app/components/ScrollProvider'
 
 // Fuente custom
 const zanovaFont = localFont({
@@ -38,7 +39,9 @@ export default function RootLayout({children} : {
                 <Header/>
 
                 <main>
+                     <ScrollProvider>
                     {children}
+                    </ScrollProvider>
                 </main>
                 <Footer/>
             </body>

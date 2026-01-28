@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactCompiler: true,
   reactStrictMode: true,
-  output: 'export',
+  //output: 'export',
 
   images: {
     unoptimized: true,

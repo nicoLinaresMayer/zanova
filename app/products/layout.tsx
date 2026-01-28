@@ -1,17 +1,17 @@
+import { ScrollProvider } from '../components/ScrollProvider'
 
-import { ReactNode } from 'react'
-import Footer from '../components/Footer'
-
-
-
-
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
-        <div>
-            {children}
-            <Footer />
-        </div>
-        
+    <html lang="es">
+      <body>
+        <ScrollProvider>
+          {children}
+        </ScrollProvider>
+      </body>
+    </html>
   )
 }
-
