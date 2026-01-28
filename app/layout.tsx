@@ -43,7 +43,7 @@ export default function RootLayout({children} : {
                     {children}
                     </ScrollProvider>
                 </main>
-                <Footer/>
+                {/*<Footer/>*/}
             </body>
       
         </html>

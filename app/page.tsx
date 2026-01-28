@@ -8,9 +8,9 @@ export default async function HomePage() {
   return (
     <>
       <HeroSection />
-      <section>
+      {/*section>
       <ProductsSection products={products} />
-      </section>
+      </section>*/}
     </>
   );
 }
