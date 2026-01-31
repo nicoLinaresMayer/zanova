@@ -7,7 +7,7 @@ const INSTAGRAM_URL = 'https://www.instagram.com/zanova.zn/'
 export default function Landing() {
     return (
         <div
-            className="fixed inset-0 z-10 flex items-center justify-centerflex flex-col min-h-[90px]  text-pearl">
+            className="fixed inset-0 z-10 flex items-center justify-centerflex flex-col min-h-[100dvh]  text-pearl">
                 <div className="absolute top-[25%]">
             <motion.a
                 href={INSTAGRAM_URL}
