@@ -8,7 +8,7 @@ export default function Landing() {
     return (
         <div
             className="fixed inset-0 z-10 flex items-center justify-centerflex flex-col min-h-[90px]  text-pearl">
-                <div className="absolute top-[27%]">
+                <div className="absolute top-[25%]">
             <motion.a
                 href={INSTAGRAM_URL}
                 target="_blank"
