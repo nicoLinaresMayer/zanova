@@ -7,7 +7,8 @@ const INSTAGRAM_URL = 'https://www.instagram.com/zanova.zn/'
 export default function Landing() {
     return (
         <div
-            className="flex flex-col min-h-[90px] gap-1 p-4 text-pearl">
+            className="fixed inset-0 z-10 flex items-center justify-centerflex flex-col min-h-[90px]  text-pearl">
+                <div className="absolute top-[27%]">
             <motion.a
                 href={INSTAGRAM_URL}
                 target="_blank"
@@ -15,7 +16,7 @@ export default function Landing() {
                 whileHover={{
                     scale: 1.05
                 }}
-                className=" gap-2 mt-5 mb-8">
+                className="">
                 <div className="flex flex-col">
                     <h2 className="text-1.5xl font-times text-center">
                         Proximamente
@@ -36,12 +37,12 @@ export default function Landing() {
                 whileTap={{
                     scale: 0.95
                 }}
-                className="flex items-center justify-center mb-6">
+                className="flex items-center justify-center">
                 <div className="flex flex-col">
 
                     <h1
                         className="text-3xl f text-center font-ig  drop-shadow-lg flex flex-col items-center">
-                        <span className="text-1.5xl font-times drop-shadow-lg -mb-2">
+                        <span className="text-1.5xl font-times drop-shadow-lg -mb-2 mt-[clamp(1rem,1vh,2rem)]">
                             Visitanos en
                         </span>
                 Instagram
@@ -69,7 +70,7 @@ export default function Landing() {
                         d="M19 9l-7 7-7-7"/>
                 </motion.svg>
             </motion.a>
-
+                    </div>
         </div>
     )
 }

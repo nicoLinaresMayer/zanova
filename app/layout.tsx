@@ -21,12 +21,15 @@ const igFont = localFont({
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es" className={`${zanovaFont.variable} ${igFont.variable}`}>
-<body className="flex  justify-center relative min-h-[100dvh] overflow-hidden mt-48">
+<body className="flex  justify-center relative min-h-[100dvh] overflow-hidden">
   {/* Imagen de fondo */}
-   <div
-    className="fixed inset-0 -z-10 bg-cover bg-center "
-    style={{ backgroundImage: "url('/hero.jpg')" }}
+   <div className="fixed inset-0 -z-10 overflow-hidden">
+  <img
+    src="/hero.jpg"
+    alt=""
+    className="w-full h-full object-cover object-[50%_50%]"
   />
+</div>
 
   {/* Overlay oscuro suave para mejorar contraste */}
   <div className="fixed inset-0 bg-black/40 -z-5"></div>
