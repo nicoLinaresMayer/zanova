@@ -14,6 +14,9 @@ module.exports = {
         'beige': '#b38f6f',  // fondo rojo claro
         'dark-red': '#710014', // fondo rojo oscuro
       },
+      fontSize: {
+        '1.5xl': '1.375rem', // ejemplo
+      },
     },
   },
   plugins: [],
