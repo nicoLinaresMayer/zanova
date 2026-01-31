@@ -1,6 +1,7 @@
 "use client"
 
 import { FloatingLogo } from '../components/FloatingLogo'
+import {motion} from 'framer-motion'
 
 const INSTAGRAM_URL = 'https://www.instagram.com/zanova.zn/'
 
@@ -12,6 +13,7 @@ export default function HeroSection() {
     style={{ backgroundImage: "url('/zanova_bg_3.jpg')" }}
   />
   <div className="absolute inset-0 bg-black/40" />
+
 
   {/* CONTENEDOR DE REFERENCIA */}
   <div className="relative h-full">

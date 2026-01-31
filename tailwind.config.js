@@ -10,7 +10,7 @@ module.exports = {
       },
       colors: {
         'light-black': '#161616',       // fondo negro
-        'pearl': '#edebe6',      // fondo blanco
+        'pearl': 'rgb(237, 235, 230)',      // fondo blanco
         'beige': '#b38f6f',  // fondo rojo claro
         'dark-red': '#710014', // fondo rojo oscuro
       },
