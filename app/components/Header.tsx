@@ -29,7 +29,7 @@ export default function Header() {
         {/* Iconos sociales apilados verticalmente a la derecha */}
         <motion.div
           style={{ opacity: iconsOpacity }}
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 flex flex-col gap-3"
+          className="absolute right-0 top-1/2 transform -translate-y-1/2 flex gap-3"
         >
           {/* Instagram */}
           <a
