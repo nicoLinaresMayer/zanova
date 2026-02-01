@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   {/* Imagen de fondo */}
    <div className="fixed inset-0 -z-10 min-h-[100dvh]">
   <img
-    src="/hero.jpg"
+    src="/hero2.jpg"
     alt=""
     className="w-full h-full object-cover object-[50%_50%]"
   />
