@@ -6,7 +6,7 @@ const INSTAGRAM_URL = 'https://www.instagram.com/zanova.zn/'
 
 export default function Hero() {
   return (
-    <section className="relative min-h-[75dvh] w-full overflow-hidden"> 
+    <section className="relative min-h-[75dvh] w-full overflow-hidden no-select"> 
       
       {/* Imagen de fondo SOLO del hero */}
       <img

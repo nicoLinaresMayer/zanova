@@ -1,11 +1,8 @@
-'use client'
 import './globals.css'
 import localFont from 'next/font/local'
-import {ReactNode} from 'react'
+import { ReactNode } from 'react'
 import Header from './components/Header'
-import Hero from './components/Hero'
-import Season from './components/Season'
-import Products from './components/Products'
+import Footer from './components/Footer'
 
 // Fuente custom
 const zanovaFont = localFont({
@@ -30,24 +27,18 @@ const igFont = localFont({
     variable: '--font-ig'
 })
 
-export default function RootLayout({children} : {
-    children: ReactNode
-}) {
-    return (
-        <html lang="es" className={`${zanovaFont.variable} ${igFont.variable}`}>
-            <body className="min-h-[100dvh] overflow-x-hidden text-white">
-                {/* Imagen de fondo */}
 
-                <Header/>
 
-                <main className="relative z-10 text-white">
-                    <Hero/>
-
-                    <Products/>
-
-                </main>
-            </body>
-
-        </html>
-    )
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="es" className={`${zanovaFont.variable} ${igFont.variable}`}>
+      <body className="min-h-[100dvh] overflow-x-hidden text-white">
+        <Header />
+        <div className="h-16"> {/* espacio igual al header */} </div>
+        {children}
+        <Footer />
+      </body>
+    </html>
+  )
 }
+
