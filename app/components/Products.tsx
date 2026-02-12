@@ -8,16 +8,16 @@ type Props = {
 
 export default function Products({ products }: Props) {
   return (
-    <section className="bg-white text-black py-12 px-6">
+    <section className="bg-white text-black py-3 px-6">
       
       {/* Header de sección */}
       <div className="max-w-6xl mx-auto mb-16">
         <span className="block text-xs uppercase tracking-[0.3em] text-neutral-600 mb-4">
-          Colección
+          Colección Ameri
         </span>
 
-        <h2 className="font-zanova text-4xl md:text-5xl">
-          Drops disponibles
+        <h2 className="font-zanova text-3xl md:text-5xl">
+          ULTIMOS LANZAMIENTOS
         </h2>
       </div>
 

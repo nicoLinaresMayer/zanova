@@ -5,7 +5,8 @@ export type Product = {
   images: string[]       // ojo, ahora es "images"
   mp_link: string
   price: string
-  sizes?: string[]       // opcional si querés talles
+  sizes?: string[]
+  colors?: string[]       // opcional si querés talles
 }
 
 const SHEET_URL =
@@ -32,6 +33,7 @@ export async function getProducts(): Promise<Product[]> {
       mp_link: p.mp_link,
       price: p.price,
       sizes: p.sizes ? p.sizes.split(',') :  ['S', 'M', 'L', 'XL'], // opcional
+      colors: p.colors ? p.colors.split(',') :  ['Blanco', 'Negro'], // opcional
       images: [p.image1, p.image2, p.image3].filter(Boolean), // acá generamos el array
     }))
 }

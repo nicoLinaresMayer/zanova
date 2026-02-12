@@ -25,6 +25,7 @@ export default async function ProductPage({ params }: Props) {
 
   // Ejemplo de talles, podés traerlos desde Google Sheets también
   const sizes = product.sizes || ['S', 'M', 'L', 'XL']
+  const colors = product?.colors || ['Blanco','Negro'];
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-4 text-black">
@@ -48,6 +49,15 @@ export default async function ProductPage({ params }: Props) {
                 className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition"
               >
                 {size}
+              </button>
+            ))}
+             <span className="mr-2 font-medium">Colores disponibles:</span>
+              {colors.map((color) => (
+              <button
+                key={color}
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition"
+              >
+                {color}
               </button>
             ))}
           </div>
