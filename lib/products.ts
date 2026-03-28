@@ -1,39 +1,48 @@
+import { createClient } from '@supabase/supabase-js'
+
 export type Product = {
   slug: string
   name: string
   description: string
-  images: string[]       // ojo, ahora es "images"
+  images: string[]
   mp_link: string
   price: string
   sizes?: string[]
-  colors?: string[]       // opcional si querés talles
+  colors?: string[]
 }
 
-const SHEET_URL =
-  'https://opensheet.elk.sh/1HgnZI2FrUcADcxgsXVkdcKFE2gGiEbZZ8BRQvwAE2j0/Activos'
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-export async function getProducts(): Promise<Product[]> {
-  const res = await fetch(SHEET_URL, {
-    cache: 'no-store', // clave para que siempre traiga datos nuevos en dev
-  })
-
-  if (!res.ok) {
-    throw new Error('Error cargando productos')
+  if (!url || !key) {
+    throw new Error('Faltan las variables de entorno de Supabase (NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY)')
   }
 
-  const data = await res.json()
+  return createClient(url, key)
+}
 
-  // Transformar columnas de imágenes en array
-  return data
-    .filter((p: any) => p.slug) // filtramos productos válidos
-    .map((p: any) => ({
-      slug: p.slug,
-      name: p.name,
-      description: p.description,
-      mp_link: p.mp_link,
-      price: p.price,
-      sizes: p.sizes ? p.sizes.split(',') :  ['S', 'M', 'L', 'XL'], // opcional
-      colors: p.colors ? p.colors.split(',') :  ['Blanco', 'Negro'], // opcional
-      images: [p.image1, p.image2, p.image3].filter(Boolean), // acá generamos el array
-    }))
+export async function getProducts(): Promise<Product[]> {
+  const supabase = getSupabaseClient()
+
+
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+  if (error) {
+    throw new Error(`Error cargando productos: ${error.message}`)
+  }
+    console.log('dATA>');
+  console.log(JSON.stringify(data));
+
+    return (data ?? []).map((p) => ({
+    slug: p.slug,
+    name: p.name,
+    description: p.description,
+    mp_link: p.mp_link,
+    price: p.price,
+    sizes: p.sizes ?? ['S', 'M', 'L', 'XL'],
+    colors: p.colors ?? ['Blanco', 'Negro'],
+    images: p.images ?? [],   // ya viene como array desde Postgres
+  }))
 }

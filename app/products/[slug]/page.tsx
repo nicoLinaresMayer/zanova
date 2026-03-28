@@ -1,75 +1,95 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { getProducts } from '@/lib/products'
 import { notFound } from 'next/navigation'
 import ProductGallery from '../../components/ProductGallery'
-
-
-export async function generateStaticParams() {
-  const products = await getProducts()
-
-  return products.map(p => ({
-    slug: p.slug,
-  }))
-}
 
 type Props = {
   params: Promise<{ slug: string }>
 }
 
-export default async function ProductPage({ params }: Props) {
-  const { slug } = await params
-  const products = await getProducts()
+export default function ProductPage({ params }: Props) {
+  const [product, setProduct] = useState<any>(null)
+  const [selectedSize, setSelectedSize] = useState<string | null>(null)
+  const [selectedColor, setSelectedColor] = useState<string | null>(null)
 
-  const product = products.find(p => p.slug === slug)
+  useEffect(() => {
+    params.then(async ({ slug }) => {
+      const products = await getProducts()
+      const found = products.find(p => p.slug === slug)
+      if (!found) notFound()
+      setProduct(found)
+    })
+  }, [])
 
-  if (!product) notFound()
+  if (!product) return null
 
-  // Ejemplo de talles, podés traerlos desde Google Sheets también
-  const sizes = product.sizes || ['S', 'M', 'L', 'XL']
-  const colors = product?.colors || ['Blanco','Negro'];
+  const sizes = product.sizes ?? ['S', 'M', 'L', 'XL']
+  const colors = product.colors ?? ['Blanco', 'Negro']
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-4 text-black">
       <div className="grid md:grid-cols-2 gap-12 items-start">
-        {/* Imagen del producto */}
+
+        {/* Galería */}
         <div className="w-full">
           <ProductGallery images={product.images} />
         </div>
 
-        {/* Detalles del producto */}
+        {/* Detalles */}
         <div className="flex flex-col gap-6">
           <h1 className="text-4xl font-bold font-zanova">{product.name}</h1>
           <p className="text-gray-700 text-lg">{product.description}</p>
 
-          {/* Talles disponibles */}
-          <div className="flex flex-wrap gap-2 items-center">
+          {/* Talles */}
+          <div>
             <span className="mr-2 font-medium">Talles disponibles:</span>
-            {sizes.map((size) => (
-              <button
-                key={size}
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition"
-              >
-                {size}
-              </button>
-            ))}
-             <span className="mr-2 font-medium">Colores disponibles:</span>
-              {colors.map((color) => (
-              <button
-                key={color}
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition"
-              >
-                {color}
-              </button>
-            ))}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {sizes.map((size: string) => (
+                <button
+                  key={size}
+                  onClick={() => setSelectedSize(size === selectedSize ? null : size)}
+                  className={`px-4 py-2 border rounded-md text-sm transition-all duration-200 ${
+                    selectedSize === size
+                      ? 'bg-black text-white border-black'
+                      : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Botón de compra */}
-          <a
-            href={product.mp_link}
+          {/* Colores */}
+          <div>
+            <span className="mr-2 font-medium">Colores disponibles:</span>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {colors.map((color: string) => (
+                <button
+                  key={color}
+                  onClick={() => setSelectedColor(color === selectedColor ? null : color)}
+                  className={`px-4 py-2 border rounded-md text-sm transition-all duration-200 ${
+                    selectedColor === color
+                      ? 'bg-black text-white border-black'
+                      : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+                  }`}
+                >
+                  {color}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Botón comprar 
+          
+            <a href={product.mp_link}
             target="_blank"
             className="mt-4 inline-block bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition"
           >
             Comprar
-          </a>
+          </a>*/}
         </div>
       </div>
     </div>
