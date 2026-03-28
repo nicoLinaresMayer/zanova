@@ -32,9 +32,6 @@ export async function getProducts(): Promise<Product[]> {
   if (error) {
     throw new Error(`Error cargando productos: ${error.message}`)
   }
-    console.log('dATA>');
-  console.log(JSON.stringify(data));
-
     return (data ?? []).map((p) => ({
     slug: p.slug,
     name: p.name,

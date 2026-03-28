@@ -13,6 +13,7 @@ export default function ProductPage({ params }: Props) {
   const [product, setProduct] = useState<any>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     params.then(async ({ slug }) => {
@@ -22,6 +23,29 @@ export default function ProductPage({ params }: Props) {
       setProduct(found)
     })
   }, [])
+
+  async function handleComprar() {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: product.slug,
+          name: product.name,
+          price: product.price,
+          size: selectedSize ?? 'M',
+          color: selectedColor ?? 'Negro',
+        })
+      })
+      const { init_point } = await res.json()
+      window.location.href = init_point
+    } catch (error) {
+      console.error('Error al crear preferencia:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!product) return null
 
@@ -82,14 +106,15 @@ export default function ProductPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Botón comprar 
-          
-            <a href={product.mp_link}
-            target="_blank"
-            className="mt-4 inline-block bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition"
+          {/* Botón comprar */}
+          <button
+            onClick={handleComprar}
+            disabled={loading}
+            className="mt-4 inline-block bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Comprar
-          </a>*/}
+            {loading ? 'Redirigiendo...' : 'Comprar'}
+          </button>
+
         </div>
       </div>
     </div>
