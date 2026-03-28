@@ -23,56 +23,65 @@ export default function ProductPage({ params }: Props) {
   const checkoutRef = useRef<any>(null)
 
   useEffect(() => {
-    params.then(async ({ slug }) => {
-      const products = await getProducts()
-      const found = products.find(p => p.slug === slug)
-      if (!found) notFound()
-      setProduct(found)
-    })
+  params.then(async ({ slug }) => {
+    const products = await getProducts()
+    const found = products.find(p => p.slug === slug)
+    if (!found) notFound()
+    setProduct(found)
+  })
 
-    // Cargar el SDK de MP
-    const script = document.createElement('script')
-    script.src = 'https://sdk.mercadopago.com/js/v2'
-    script.async = true
-    document.body.appendChild(script)
+  // Cargar el SDK de MP y esperar a que esté listo
+  const script = document.createElement('script')
+  script.src = 'https://sdk.mercadopago.com/js/v2'
+  script.async = true
+  script.onload = () => {
+    console.log('MP SDK cargado:', !!window.MercadoPago)
+  }
+  document.body.appendChild(script)
 
-    return () => {
-      document.body.removeChild(script)
-    }
-  }, [])
+  return () => {
+    document.body.removeChild(script)
+  }
+}, [])
 
   async function handleComprar() {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          slug: product.slug,
-          name: product.name,
-          price: product.price,
-          size: selectedSize ?? 'M',
-          color: selectedColor ?? 'Negro',
-        })
-      })
-
-      const { preference_id } = await res.json()
-
-      const mp = new window.MercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY, {
-        locale: 'es-AR'
-      })
-
-      checkoutRef.current = mp.checkout({
-        preference: { id: preference_id },
-        autoOpen: true, // abre el checkout automáticamente
-      })
-
-    } catch (error) {
-      console.error('Error al crear preferencia:', error)
-    } finally {
-      setLoading(false)
-    }
+  if (!window.MercadoPago) {
+    console.error('SDK de MP todavía no cargó')
+    return
   }
+
+  setLoading(true)
+  try {
+    const res = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug: product.slug,
+        name: product.name,
+        price: product.price,
+        size: selectedSize ?? 'M',
+        color: selectedColor ?? 'Negro',
+      })
+    })
+
+    const { preference_id } = await res.json()
+    console.log('Preference ID:', preference_id)
+
+    const mp = new window.MercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY, {
+      locale: 'es-AR'
+    })
+
+    mp.checkout({
+      preference: { id: preference_id },
+      autoOpen: true,
+    })
+
+  } catch (error) {
+    console.error('Error:', error)
+  } finally {
+    setLoading(false)
+  }
+}
 
   if (!product) return null
 
