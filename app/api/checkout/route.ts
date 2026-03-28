@@ -17,18 +17,12 @@ export async function POST(request: Request) {
           unit_price: Number(price),
           currency_id: 'ARS',
         }
-      ],
-      back_urls: {
-        success: `${process.env.NEXT_PUBLIC_BASE_URL}/gracias`,
-        failure: `${process.env.NEXT_PUBLIC_BASE_URL}/error`,
-        pending: `${process.env.NEXT_PUBLIC_BASE_URL}/pendiente`,
-      },
-      auto_return: 'approved',
+      ]
     }
   })
 
   return Response.json({ 
-  preference_id: preference.id,
-  init_point: preference.init_point 
-})
+    preference_id: preference.id,
+    init_point: preference.init_point 
+  })
 }
