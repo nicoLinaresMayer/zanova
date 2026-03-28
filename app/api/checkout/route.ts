@@ -27,5 +27,8 @@ export async function POST(request: Request) {
     }
   })
 
-  return Response.json({ init_point: preference.init_point })
+  return Response.json({ 
+  preference_id: preference.id,
+  init_point: preference.init_point 
+})
 }

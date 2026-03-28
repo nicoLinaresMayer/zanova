@@ -1,9 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getProducts } from '@/lib/products'
 import { notFound } from 'next/navigation'
 import ProductGallery from '../../components/ProductGallery'
+
+declare global {
+  interface Window {
+    MercadoPago: any
+  }
+}
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -14,6 +20,7 @@ export default function ProductPage({ params }: Props) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const checkoutRef = useRef<any>(null)
 
   useEffect(() => {
     params.then(async ({ slug }) => {
@@ -22,6 +29,16 @@ export default function ProductPage({ params }: Props) {
       if (!found) notFound()
       setProduct(found)
     })
+
+    // Cargar el SDK de MP
+    const script = document.createElement('script')
+    script.src = 'https://sdk.mercadopago.com/js/v2'
+    script.async = true
+    document.body.appendChild(script)
+
+    return () => {
+      document.body.removeChild(script)
+    }
   }, [])
 
   async function handleComprar() {
@@ -38,8 +55,18 @@ export default function ProductPage({ params }: Props) {
           color: selectedColor ?? 'Negro',
         })
       })
-      const { init_point } = await res.json()
-      window.location.href = init_point
+
+      const { preference_id } = await res.json()
+
+      const mp = new window.MercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY, {
+        locale: 'es-AR'
+      })
+
+      checkoutRef.current = mp.checkout({
+        preference: { id: preference_id },
+        autoOpen: true, // abre el checkout automáticamente
+      })
+
     } catch (error) {
       console.error('Error al crear preferencia:', error)
     } finally {
@@ -112,7 +139,7 @@ export default function ProductPage({ params }: Props) {
             disabled={loading}
             className="mt-4 inline-block bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Redirigiendo...' : 'Comprar'}
+            {loading ? 'Cargando...' : 'Comprar'}
           </button>
 
         </div>
