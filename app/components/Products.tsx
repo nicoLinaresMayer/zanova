@@ -11,19 +11,32 @@ type Props = {
 function ProductCard({ p, index }: { p: Product; index: number }) {
   const [current, setCurrent] = useState(0)
 
+  const images = p.images.map(img => img.url)
+
+  // Colores y talles únicos con stock > 0
+  const availableColors = [...new Set(
+    p.variants.filter(v => (v.stock ?? 0) > 0).map(v => v.color)
+  )]
+  
+  const SIZE_ORDER = ['S', 'M', 'L', 'XL', 'XXL']
+
+  const availableSizes = [...new Set(
+    p.variants.filter(v => (v.stock ?? 0) > 0).map(v => v.size)
+  )].sort((a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b))
+
   return (
     <div className="flex flex-col">
       {/* Número editorial */}
-      <span className="text-[10px] uppercase tracking-[0.35em] text-neutral-400 mb-2 font-ig">
+      <span className="text-[10px] uppercase tracking-[0.35em] text-neutral-400 mb-2">
         {String(index + 1).padStart(2, '0')}
       </span>
 
       {/* Imagen principal */}
       <Link href={`/products/${p.slug}`} className="group block">
         <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100">
-          {p.images[current] ? (
+          {images[current] ? (
             <img
-              src={p.images[current]}
+              src={images[current]}
               alt={p.name}
               className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
             />
@@ -34,9 +47,9 @@ function ProductCard({ p, index }: { p: Product; index: number }) {
       </Link>
 
       {/* Thumbnails */}
-      {p.images.length > 1 && (
+      {images.length > 1 && (
         <div className="flex gap-2 mt-2">
-          {p.images.map((img, i) => (
+          {images.map((img, i) => (
             <button
               key={i}
               onClick={() => setCurrent(i)}
@@ -54,10 +67,30 @@ function ProductCard({ p, index }: { p: Product; index: number }) {
         </div>
       )}
 
-      {/* Info siempre visible */}
-      <Link href={`/products/${p.slug}`} className="mt-3 flex items-baseline justify-between px-0.5">
+      {/* Info */}
+      <Link href={`/products/${p.slug}`} className="mt-3 flex flex-col gap-1 px-0.5">
         <h3 className="font-zanova text-lg uppercase leading-tight">{p.name}</h3>
-        
+
+        <div className="flex items-center gap-3 mt-1">
+          {/* Colores */}
+          {availableColors.length > 0 && (
+            <span className="text-[10px] uppercase tracking-[0.2em] text-neutral-400">
+              {availableColors.join(' · ')}
+            </span>
+          )}
+
+          {/* Separador */}
+          {availableColors.length > 0 && availableSizes.length > 0 && (
+            <span className="text-neutral-200 text-xs">|</span>
+          )}
+
+          {/* Talles */}
+          {availableSizes.length > 0 && (
+            <span className="text-[10px] uppercase tracking-[0.2em] text-neutral-400">
+              {availableSizes.join(' · ')}
+            </span>
+          )}
+        </div>
       </Link>
     </div>
   )

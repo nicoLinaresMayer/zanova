@@ -21,7 +21,7 @@ export default function Hero() {
     >
       {/* Imagen de fondo SOLO del hero */}
       <img
-        src="/hero.jpg?v=2"
+        src="https://res.cloudinary.com/dgrdr1yc2/image/upload/v1775147139/D958FF28-4CCA-419D-82A8-512AEC6079A5_wtdl5l.jpg"
         alt=""
         className="absolute inset-0 w-full h-full object-cover object-[0%_50%]"
       />
@@ -34,10 +34,10 @@ export default function Hero() {
 
           <h1 className="font-zanova text-center leading-none tracking-widest">
             <span className="block text-[clamp(2.5rem,8vw,6rem)]">
-              TEMPORADA 2026
+              TEMPORADA
             </span>
             <span className="block text-[clamp(3.5rem,10vw,8rem)] font-bold mt-10">
-              DROPS
+               Otono - invierno
             </span>
           </h1>
 
