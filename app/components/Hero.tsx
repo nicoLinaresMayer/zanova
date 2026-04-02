@@ -1,15 +1,44 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { getHeroImage } from '@/lib/products'
 
-const INSTAGRAM_URL = 'https://www.instagram.com/zanova.zn/'
+function NWithTilde({ className }: { className?: string }) {
+  const nRef = useRef<HTMLSpanElement>(null)
+  const [tildePx, setTildePx] = useState(0)
+
+  useEffect(() => {
+    const update = () => {
+      if (nRef.current) {
+        const isMobile = window.innerWidth < 768
+        setTildePx(nRef.current.offsetHeight * (isMobile ? 0.50 : 0.6))
+      }
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  return (
+    <span className={`relative inline-block ${className ?? ''}`}>
+      <span ref={nRef}>n</span>
+      <span
+        className="absolute left-1/2 -translate-x-1/2 leading-none"
+        style={{ bottom: `${tildePx}px`, fontSize: '0.5em' }}
+      >
+        ~
+      </span>
+    </span>
+  )
+}
 
 export default function Hero() {
   const [h, setH] = useState<number | null>(null)
+  const [heroImage, setHeroImage] = useState<string | null>(null)
 
   useEffect(() => {
     setH(window.innerHeight * 0.85)
+    getHeroImage().then(setHeroImage)
   }, [])
 
   if (h === null) return null
@@ -19,33 +48,30 @@ export default function Hero() {
       className="relative w-full overflow-hidden no-select"
       style={{ height: `${h}px` }}
     >
-      {/* Imagen de fondo SOLO del hero */}
-      <img
-        src="https://res.cloudinary.com/dgrdr1yc2/image/upload/v1775147139/D958FF28-4CCA-419D-82A8-512AEC6079A5_wtdl5l.jpg"
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover object-[0%_50%]"
-      />
+      {heroImage && (
+        <img
+          src={heroImage}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-[50%_50%]"
+        />
+      )}
 
-      {/* Overlay */}
       <div className="absolute inset-0 bg-black/40" />
 
-      {/* Contenido */}
-        <div className="relative z-10 flex h-full h-full flex-col items-center justify-start pt-[20vh]  text-pearl">
+      <div className="relative z-10 flex h-full flex-col items-center justify-start pt-[20vh] text-pearl">
+        <h1 className="font-zanova text-center leading-none tracking-widest">
+          <span className="block text-[clamp(2.5rem,8vw,6rem)]">
+            TEMPORADA
+          </span>
+          <span className="block text-[clamp(3.5rem,10vw,8rem)] font-bold mt-10">
+            Oto<NWithTilde />o - invierno
+          </span>
+        </h1>
 
-          <h1 className="font-zanova text-center leading-none tracking-widest">
-            <span className="block text-[clamp(2.5rem,8vw,6rem)]">
-              TEMPORADA
-            </span>
-            <span className="block text-[clamp(3.5rem,10vw,8rem)] font-bold mt-10">
-               Otono - invierno
-            </span>
-          </h1>
-
-          <p className="mt-6 text-sm font-times uppercase tracking-[0.3em] opacity-80">
-            Lanzamientos limitados
-          </p>
-
-        </div>
+        <p className="mt-10 sm:text-3xl font-times uppercase tracking-[0.3em] opacity-80">
+          Lanzamientos limitados
+        </p>
+      </div>
     </section>
   )
 }

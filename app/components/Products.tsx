@@ -105,9 +105,7 @@ export default function Products({ products }: Props) {
         <h2 className="font-zanova text-[clamp(2rem,8vw,5rem)] leading-none tracking-tight uppercase">
           Ultimos<br />Lanzamientos
         </h2>
-        <span className="text-[10px] uppercase tracking-[0.35em] text-neutral-400 pb-1 hidden md:block">
-          Temporada 2026
-        </span>
+
       </div>
 
       {/* Grid — 2 columnas siempre */}

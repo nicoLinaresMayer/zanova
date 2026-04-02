@@ -139,3 +139,17 @@ function mapProduct(p: any): Product {
     sizes,
   }
 }
+
+export async function getHeroImage(): Promise<string | null> {
+  const supabase = getSupabaseClient()
+
+  const { data, error } = await supabase
+    .from('product_images')
+    .select('url')
+    .is('product_id', null)
+    .eq('position', -1)
+    .single()
+
+  if (error || !data) return null
+  return data.url
+}
