@@ -22,15 +22,16 @@ export default function ProductPage({ params }: Props) {
   const [showBrick, setShowBrick] = useState(false)
 
   useEffect(() => {
-    params.then(async ({ slug }) => {
+  params.then(async ({ slug }) => {
       const found = await getProductBySlug(slug)
       if (!found) notFound()
       setProduct(found)
-      // preseleccionar primer color con stock
-      const firstImage = found.images
-      .filter(img => img.position > 0)
-      .sort((a, b) => a.position - b.position)[0]
-      const firstColor = firstImage?.color ?? found.colors[0] ?? null
+
+      const searchParams = new URLSearchParams(window.location.search)
+      const colorFromUrl = searchParams.get('color')
+      const firstColor = colorFromUrl && found.colors.includes(colorFromUrl)
+        ? colorFromUrl
+        : found.colors[0] ?? null
       setSelectedColor(firstColor)
     })
 
@@ -39,7 +40,7 @@ export default function ProductPage({ params }: Props) {
     script.async = true
     document.body.appendChild(script)
     return () => { document.body.removeChild(script) }
-  }, [])
+}, [])
 
   if (!product) return null
 
