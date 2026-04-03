@@ -353,7 +353,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ── IMÁGENES ── */}
+      {/* ── IMÁGENES  ── */}
       {tab === 'imagenes' && (
         <div className="space-y-6">
           <select className={inputClass} value={selectedId ?? ''} onChange={e => setSelectedId(e.target.value || null)}>
