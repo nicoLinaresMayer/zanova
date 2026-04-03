@@ -19,6 +19,7 @@ export default function HeroClient({ heroImage }: Props) {
     <section
       className="relative w-full overflow-hidden no-select bg-neutral-900"
       style={{ height: h ? `${h}px` : '85dvh' }}
+      suppressHydrationWarning
     >
       {heroImage && (
         <img
