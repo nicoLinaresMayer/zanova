@@ -111,10 +111,10 @@ function mapProduct(p: any): Product {
 
   // Colores ordenados por color_position
   const colors = [...new Map(
-    (p.product_variants ?? [])
-      .sort((a: any, b: any) => (a.color_position ?? 0) - (b.color_position ?? 0))
-      .map((v: any) => [v.color, v.color_position])
-  ).keys()]
+      (p.product_variants ?? [])
+        .sort((a: any, b: any) => (a.color_position ?? 0) - (b.color_position ?? 0))
+        .map((v: any) => [v.color, v.color_position])
+    ).keys()] as string[]
 
   // Imágenes ordenadas por color_position primero, luego por position
   const images: ProductImage[] = (p.product_images ?? [])
@@ -132,8 +132,8 @@ function mapProduct(p: any): Product {
     }))
 
   const SIZE_ORDER = ['S', 'M', 'L', 'XL', 'XXL']
-  const sizes = [...new Set(variants.map(v => v.size))]
-    .sort((a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b))
+  const sizes = ([...new Set(variants.map(v => v.size))] as string[])
+  .sort((a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b))
 
   return {
     id: p.id,
