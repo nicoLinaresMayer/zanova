@@ -44,9 +44,6 @@ export default function AdminPage() {
   const [imgColor, setImgColor] = useState('')
   const [imgPos, setImgPos] = useState(1)
 
-  const [editingImageId, setEditingImageId] = useState<string | null>(null)
-  const [editingUrl, setEditingUrl] = useState('')
-
   const [varColor, setVarColor] = useState('')
   const [varSize, setVarSize] = useState('')
   const [varStock, setVarStock] = useState(0)
@@ -56,9 +53,12 @@ export default function AdminPage() {
 
   const [productEdits, setProductEdits] = useState<Record<string, Partial<Product>>>({})
   const [variantEdits, setVariantEdits] = useState<Record<string, Partial<Variant>>>({})
+  const [imageEdits, setImageEdits] = useState<Record<string, Partial<Image>>>({})
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null)
   const [expandedVariant, setExpandedVariant] = useState<string | null>(null)
   const [globalPrice, setGlobalPrice] = useState<string>('')
+
+  const [variantBatchEdits, setVariantBatchEdits] = useState<Record<string, Partial<Variant>>>({})
 
   useEffect(() => { fetchProducts() }, [])
 
@@ -113,6 +113,27 @@ export default function AdminPage() {
     notify('Variante guardada')
   }
 
+  function editImage(id: string, field: string, value: any) {
+    setImageEdits(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }))
+  }
+
+  async function saveAllImages() {
+    setLoading(true)
+    await Promise.all(
+      Object.entries(imageEdits).map(([id, changes]) =>
+        fetch('/api/admin/images', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, ...changes })
+        })
+      )
+    )
+    setImageEdits({})
+    await fetchProducts()
+    setLoading(false)
+    notify('Imágenes guardadas')
+  }
+
   async function addImage() {
     if (!selectedId || !imgUrl) return
     setLoading(true)
@@ -136,17 +157,6 @@ export default function AdminPage() {
     })
     await fetchProducts()
     notify('Imagen eliminada')
-  }
-
-  async function saveImageUrl(id: string) {
-    await fetch('/api/admin/images', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, url: editingUrl })
-    })
-    setEditingImageId(null)
-    await fetchProducts()
-    notify('Imagen actualizada')
   }
 
   async function addVariant() {
@@ -196,24 +206,44 @@ export default function AdminPage() {
     notify('Producto creado')
   }
 
-
   async function applyGlobalPrice(productId: string) {
-  if (!globalPrice || !selected) return
-  setLoading(true)
-  await Promise.all(
-    selected.product_variants.map(v =>
-      fetch('/api/admin/variants', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: v.id, price: Number(globalPrice) })
-      })
+    if (!globalPrice || !selected) return
+    setLoading(true)
+    await Promise.all(
+      selected.product_variants.map(v =>
+        fetch('/api/admin/variants', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: v.id, price: Number(globalPrice) })
+        })
+      )
     )
-  )
-  setGlobalPrice('')
-  await fetchProducts()
-  setLoading(false)
-  notify('Precio aplicado a todas las variantes')
+    setGlobalPrice('')
+    await fetchProducts()
+    setLoading(false)
+    notify('Precio aplicado a todas las variantes')
+  }
+
+  function editVariantBatch(id: string, field: string, value: any) {
+  setVariantBatchEdits(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }))
 }
+
+  async function saveAllVariants() {
+    setLoading(true)
+    await Promise.all(
+      Object.entries(variantBatchEdits).map(([id, changes]) =>
+        fetch('/api/admin/variants', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, ...changes })
+        })
+      )
+    )
+    setVariantBatchEdits({})
+    await fetchProducts()
+    setLoading(false)
+    notify('Variantes guardadas')
+  }
 
 
 
@@ -251,6 +281,7 @@ export default function AdminPage() {
           <p className="text-xs text-gray-400 uppercase tracking-wider">
             Editá los campos directamente — guardá cuando termines
           </p>
+
 
           {/* MOBILE */}
           <div className="md:hidden space-y-2">
@@ -353,16 +384,18 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ── IMÁGENES  ── */}
+      {/* ── IMÁGENES ── */}
       {tab === 'imagenes' && (
         <div className="space-y-6">
-          <select className={inputClass} value={selectedId ?? ''} onChange={e => setSelectedId(e.target.value || null)}>
+          <select className={inputClass} value={selectedId ?? ''} onChange={e => { setSelectedId(e.target.value || null); setImageEdits({}) }}>
             <option value="">— Elegí un producto —</option>
             {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
 
           {selected && (
             <>
+
+              {/* Imágenes agrupadas por color */}
               {(() => {
                 const byColor: Record<string, Image[]> = {}
                 for (const img of selected.product_images.sort((a, b) => a.position - b.position)) {
@@ -376,22 +409,30 @@ export default function AdminPage() {
                     <div className="space-y-2">
                       {imgs.map(img => (
                         <div key={img.id} className="flex items-center gap-3 bg-gray-50 rounded px-3 py-2">
-                          <img src={img.url} className="w-12 h-12 object-cover rounded flex-shrink-0" />
-                          {editingImageId === img.id ? (
-                            <div className="flex-1 flex gap-2">
-                              <input className={`${inputClass} flex-1`} value={editingUrl} onChange={e => setEditingUrl(e.target.value)} autoFocus />
-                              <button className={btnClass} onClick={() => saveImageUrl(img.id)}>Guardar</button>
-                              <button className="text-gray-400 hover:text-gray-600 text-sm px-2" onClick={() => setEditingImageId(null)}>Cancelar</button>
-                            </div>
-                          ) : (
-                            <>
-                              <span className="text-xs text-gray-500 flex-1 truncate cursor-pointer hover:text-black transition" onClick={() => { setEditingImageId(img.id); setEditingUrl(img.url) }} title="Click para editar URL">
-                                {img.url}
-                              </span>
-                              <span className="text-xs bg-gray-200 px-2 py-0.5 rounded flex-shrink-0">pos {img.position}</span>
-                              <button onClick={() => deleteImage(img.id)} className="text-red-400 hover:text-red-600 text-xs flex-shrink-0">✕</button>
-                            </>
+                          <img
+                            src={imageEdits[img.id]?.url ?? img.url}
+                            className="w-12 h-12 object-cover rounded flex-shrink-0"
+                          />
+
+                          <input
+                            className="text-xs text-gray-500 flex-1 border border-transparent hover:border-gray-300 focus:border-black rounded px-2 py-1 transition bg-transparent"
+                            defaultValue={img.url}
+                            onChange={e => editImage(img.id, 'url', e.target.value)}
+                            placeholder="URL"
+                          />
+
+                          <input
+                            type="number"
+                            className={`text-xs border rounded px-2 py-1 w-16 transition ${imageEdits[img.id]?.position !== undefined ? 'border-orange-300 bg-orange-50' : 'border-transparent hover:border-gray-300 focus:border-black bg-transparent'}`}
+                            defaultValue={img.position}
+                            onChange={e => editImage(img.id, 'position', Number(e.target.value))}
+                          />
+
+                          {imageEdits[img.id] && (
+                            <span className="text-orange-400 text-xs flex-shrink-0">•</span>
                           )}
+
+                          <button onClick={() => deleteImage(img.id)} className="text-red-400 hover:text-red-600 text-xs flex-shrink-0">✕</button>
                         </div>
                       ))}
                     </div>
@@ -399,6 +440,7 @@ export default function AdminPage() {
                 ))
               })()}
 
+              {/* Colores sin imágenes */}
               {(() => {
                 const coloresConImagenes = new Set(selected.product_images.filter(img => img.color).map(img => img.color))
                 const coloresSinImagenes = [...new Set(selected.product_variants.map(v => v.color))].filter(color => !coloresConImagenes.has(color))
@@ -418,6 +460,7 @@ export default function AdminPage() {
                 )
               })()}
 
+              {/* Form agregar imagen */}
               <div className="border border-gray-200 rounded p-4 space-y-3">
                 <p className="text-sm font-medium">Agregar imagen</p>
                 <div className="space-y-1">
@@ -444,7 +487,7 @@ export default function AdminPage() {
       {/* ── STOCK & VARIANTES ── */}
       {tab === 'stock' && (
         <div className="space-y-6">
-          <select className={inputClass} value={selectedId ?? ''} onChange={e => setSelectedId(e.target.value || null)}>
+          <select className={inputClass} value={selectedId ?? ''} onChange={e => { setSelectedId(e.target.value || null); setVariantBatchEdits({}) }}>
             <option value="">— Elegí un producto —</option>
             {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
@@ -474,6 +517,22 @@ export default function AdminPage() {
           )}
 
 
+            {Object.keys(variantBatchEdits).length > 0 && (
+              <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded px-4 py-2">
+                <span className="text-xs text-orange-600">
+                  {Object.keys(variantBatchEdits).length} variante{Object.keys(variantBatchEdits).length > 1 ? 's' : ''} con cambios sin guardar
+                </span>
+                <div className="flex gap-2">
+                  <button onClick={() => setVariantBatchEdits({})} className="text-xs text-gray-500 hover:text-gray-800 border border-gray-300 px-3 py-1.5 rounded transition">
+                    Cancelar
+                  </button>
+                  <button onClick={saveAllVariants} disabled={loading} className={btnClass}>
+                    Guardar todo
+                  </button>
+                </div>
+              </div>
+            )}
+
 
           {selected && (
             <>
@@ -489,9 +548,9 @@ export default function AdminPage() {
                         <span className="font-medium text-sm">{v.color}</span>
                         <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">{v.size}</span>
                         <span className="text-xs text-gray-400">Stock: {v.stock + v.stock_amoremio}</span>
-                            {v.price && (
-                              <span className="text-xs text-gray-400">Precio:· $ {Number(v.price).toLocaleString('es-AR')}</span>
-                            )}
+                        {v.price && (
+                          <span className="text-xs text-gray-400">· $ {Number(v.price).toLocaleString('es-AR')}</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-3">
                         {variantEdits[v.id] && <span className="text-xs text-orange-400 font-medium">Sin guardar</span>}
@@ -499,33 +558,33 @@ export default function AdminPage() {
                       </div>
                     </button>
                     {expandedVariant === v.id && (
-                      <div className="px-4 pb-4 pt-2 border-t border-gray-100 space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Stock local</label>
-                            <input type="number" defaultValue={v.stock} className={inputClass} onChange={e => editVariant(v.id, 'stock', Number(e.target.value))} />
+                        <div className="px-4 pb-4 pt-2 border-t border-gray-100 space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-xs text-gray-500 uppercase tracking-wider">Stock local</label>
+                              <input type="number" defaultValue={v.stock} className={inputClass} onChange={e => editVariantBatch(v.id, 'stock', Number(e.target.value))} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs text-gray-500 uppercase tracking-wider">Stock Amoremio</label>
+                              <input type="number" defaultValue={v.stock_amoremio} className={inputClass} onChange={e => editVariantBatch(v.id, 'stock_amoremio', Number(e.target.value))} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs text-gray-500 uppercase tracking-wider">Precio (ARS)</label>
+                              <input type="number" defaultValue={v.price ?? ''} className={inputClass} onChange={e => editVariantBatch(v.id, 'price', Number(e.target.value))} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs text-gray-500 uppercase tracking-wider">Orden del color</label>
+                              <input type="number" defaultValue={v.color_position ?? 0} className={inputClass} onChange={e => editVariantBatch(v.id, 'color_position', Number(e.target.value))} />
+                            </div>
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Stock Amoremio</label>
-                            <input type="number" defaultValue={v.stock_amoremio} className={inputClass} onChange={e => editVariant(v.id, 'stock_amoremio', Number(e.target.value))} />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Precio (ARS)</label>
-                            <input type="number" defaultValue={v.price ?? ''} className={inputClass} onChange={e => editVariant(v.id, 'price', Number(e.target.value))} />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-xs text-gray-500 uppercase tracking-wider">Orden del color</label>
-                            <input type="number" defaultValue={v.color_position ?? 0} className={inputClass} onChange={e => editVariant(v.id, 'color_position', Number(e.target.value))} />
+                          <div className="flex items-center justify-between">
+                            {variantBatchEdits[v.id] && (
+                              <span className="text-orange-400 text-xs">Sin guardar</span>
+                            )}
+                            <button onClick={() => deleteVariant(v.id)} className="text-red-400 hover:text-red-600 text-xs ml-auto">Eliminar variante</button>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between">
-                          {variantEdits[v.id] && (
-                            <button onClick={() => saveVariant(v.id)} disabled={loading} className={btnClass}>Guardar</button>
-                          )}
-                          <button onClick={() => deleteVariant(v.id)} className="text-red-400 hover:text-red-600 text-xs ml-auto">Eliminar variante</button>
-                        </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                 ))}
               </div>
@@ -550,20 +609,20 @@ export default function AdminPage() {
                         <td className="py-2 pr-3">{v.color}</td>
                         <td className="py-2 pr-3">{v.size}</td>
                         <td className="py-2 pr-3">
-                          <input type="number" defaultValue={v.stock} className="border border-gray-200 rounded px-2 py-1 w-16 text-sm" onChange={e => editVariant(v.id, 'stock', Number(e.target.value))} />
+                          <input type="number" defaultValue={v.stock} className={`border rounded px-2 py-1 w-16 text-sm ${variantBatchEdits[v.id]?.stock !== undefined ? 'border-orange-300 bg-orange-50' : 'border-gray-200'}`} onChange={e => editVariantBatch(v.id, 'stock', Number(e.target.value))} />
                         </td>
                         <td className="py-2 pr-3">
-                          <input type="number" defaultValue={v.stock_amoremio} className="border border-gray-200 rounded px-2 py-1 w-16 text-sm" onChange={e => editVariant(v.id, 'stock_amoremio', Number(e.target.value))} />
+                          <input type="number" defaultValue={v.stock_amoremio} className={`border rounded px-2 py-1 w-16 text-sm ${variantBatchEdits[v.id]?.stock_amoremio !== undefined ? 'border-orange-300 bg-orange-50' : 'border-gray-200'}`} onChange={e => editVariantBatch(v.id, 'stock_amoremio', Number(e.target.value))} />
                         </td>
                         <td className="py-2 pr-3">
-                          <input type="number" defaultValue={v.price ?? ''} className="border border-gray-200 rounded px-2 py-1 w-24 text-sm" onChange={e => editVariant(v.id, 'price', Number(e.target.value))} />
+                          <input type="number" defaultValue={v.price ?? ''} className={`border rounded px-2 py-1 w-24 text-sm ${variantBatchEdits[v.id]?.price !== undefined ? 'border-orange-300 bg-orange-50' : 'border-gray-200'}`} onChange={e => editVariantBatch(v.id, 'price', Number(e.target.value))} />
                         </td>
                         <td className="py-2 pr-3">
-                          <input type="number" defaultValue={v.color_position ?? 0} className="border border-gray-200 rounded px-2 py-1 w-16 text-sm" onChange={e => editVariant(v.id, 'color_position', Number(e.target.value))} />
+                          <input type="number" defaultValue={v.color_position ?? 0} className={`border rounded px-2 py-1 w-16 text-sm ${variantBatchEdits[v.id]?.color_position !== undefined ? 'border-orange-300 bg-orange-50' : 'border-gray-200'}`} onChange={e => editVariantBatch(v.id, 'color_position', Number(e.target.value))} />
                         </td>
                         <td className="py-2 flex items-center gap-2">
-                          {variantEdits[v.id] && (
-                            <button onClick={() => saveVariant(v.id)} disabled={loading} className={btnClass}>Guardar</button>
+                          {variantBatchEdits[v.id] && (
+                            <span className="text-orange-400 text-xs">•</span>
                           )}
                           <button onClick={() => deleteVariant(v.id)} className="text-red-400 hover:text-red-600 text-xs">✕</button>
                         </td>
