@@ -135,7 +135,10 @@ export default function ProductPage({ params }: Props) {
 
         {/* Galería — imágenes del color seleccionado */}
         <div className="w-full">
-          <ProductGallery images={visibleImages} />
+          <ProductGallery 
+            key={selectedColor ?? 'default'} 
+            images={visibleImages} 
+          />
         </div>
 
         <div className="flex flex-col gap-1">
