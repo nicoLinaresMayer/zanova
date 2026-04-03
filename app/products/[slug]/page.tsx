@@ -5,6 +5,7 @@ import { getProductBySlug } from '@/lib/products'
 import type { Product } from '@/lib/products'
 import { notFound } from 'next/navigation'
 import ProductGallery from '../../components/ProductGallery'
+import { useRouter } from 'next/navigation'
 
 declare global {
   interface Window { MercadoPago: any }
@@ -16,13 +17,16 @@ type Props = {
 
 export default function ProductPage({ params }: Props) {
   const [product, setProduct] = useState<Product | null>(null)
+  const [mounted, setMounted] = useState(false)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [showBrick, setShowBrick] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
-  params.then(async ({ slug }) => {
+    setMounted(true)
+    params.then(async ({ slug }) => {
       const found = await getProductBySlug(slug)
       if (!found) notFound()
       setProduct(found)
@@ -40,17 +44,50 @@ export default function ProductPage({ params }: Props) {
     script.async = true
     document.body.appendChild(script)
     return () => { document.body.removeChild(script) }
-}, [])
+  }, [])
 
-  if (!product) return null
+  if (!mounted || !product) return (
+    <div className="max-w-6xl mx-auto px-6 py-4">
+      <div className="grid md:grid-cols-2 gap-6 items-start animate-pulse">
+
+        {/* Skeleton galería */}
+        <div className="w-full aspect-[3/4] bg-neutral-200 rounded-xl" />
+
+        {/* Skeleton info */}
+        <div className="flex flex-col gap-4">
+          <div className="h-8 bg-neutral-200 rounded w-3/4" />
+          <div className="h-4 bg-neutral-200 rounded w-full" />
+          <div className="h-4 bg-neutral-200 rounded w-2/3" />
+
+          <div className="mt-4">
+            <div className="h-3 bg-neutral-200 rounded w-24 mb-3" />
+            <div className="flex gap-2">
+              <div className="h-10 w-20 bg-neutral-200 rounded-md" />
+              <div className="h-10 w-20 bg-neutral-200 rounded-md" />
+            </div>
+          </div>
+
+          <div className="mt-2">
+            <div className="h-3 bg-neutral-200 rounded w-24 mb-3" />
+            <div className="flex gap-2">
+              <div className="h-10 w-14 bg-neutral-200 rounded-md" />
+              <div className="h-10 w-14 bg-neutral-200 rounded-md" />
+              <div className="h-10 w-14 bg-neutral-200 rounded-md" />
+              <div className="h-10 w-14 bg-neutral-200 rounded-md" />
+            </div>
+          </div>
+
+          <div className="mt-4 h-12 bg-neutral-200 rounded-lg w-full" />
+        </div>
+      </div>
+    </div>
+  )
 
   // Imágenes filtradas por color seleccionado
   const visibleImages = product.images
-    .filter(img => img.color === selectedColor )
+    .filter(img => img.color === selectedColor)
     .map(img => img.url)
 
-
-    
   // Talles disponibles para el color seleccionado
   const SIZE_ORDER = ['S', 'M', 'L', 'XL', 'XXL']
 
@@ -70,64 +107,17 @@ export default function ProductPage({ params }: Props) {
   const selectedStock = selectedVariant?.stock ?? null
 
   async function handleComprar() {
-    if (!window.MercadoPago || !selectedVariant) return
-    setLoading(true)
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          slug: product!.slug,
-          name: product!.name,
-          price: displayPrice,
-          size: selectedSize,
-          color: selectedColor,
-        })
-      })
-      const { preference_id } = await res.json()
+    if (!selectedSize || !selectedColor) return
 
-      const mp = new window.MercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY, {
-        locale: 'es-AR',
-        advancedFraudPrevention: false,
-      })
+    const params = new URLSearchParams({
+      slug: product!.slug,
+      name: product!.name,
+      color: selectedColor,
+      size: selectedSize,
+      price: String(displayPrice ?? ''),
+    })
 
-      const bricksBuilder = mp.bricks()
-      const container = document.getElementById('payment-brick-container')
-      if (container) container.innerHTML = ''
-
-      await bricksBuilder.create('payment', 'payment-brick-container', {
-        initialization: {
-          amount: Number(displayPrice),
-          preferenceId: preference_id,
-        },
-        customization: {
-          paymentMethods: {
-            ticket: 'all',
-            creditCard: 'all',
-            debitCard: 'all',
-            mercadoPago: 'all',
-          },
-        },
-        callbacks: {
-          onReady: () => { setShowBrick(true); setLoading(false) },
-          onSubmit: async ({ formData }: any) => {
-            const res = await fetch('/api/process-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(formData)
-            })
-            const data = await res.json()
-            if (data.status === 'approved') window.location.href = '/gracias'
-            else if (data.status === 'pending') window.location.href = '/pendiente'
-            else window.location.href = '/error'
-          },
-          onError: (error: any) => { console.error(error); setLoading(false) },
-        },
-      })
-    } catch (error) {
-      console.error(error)
-      setLoading(false)
-    }
+    router.push(`/checkout?${params.toString()}`)
   }
 
   return (
@@ -136,9 +126,9 @@ export default function ProductPage({ params }: Props) {
 
         {/* Galería — imágenes del color seleccionado */}
         <div className="w-full">
-          <ProductGallery 
-            key={selectedColor ?? 'default'} 
-            images={visibleImages} 
+          <ProductGallery
+            key={selectedColor ?? 'default'}
+            images={visibleImages}
           />
         </div>
 
@@ -157,7 +147,7 @@ export default function ProductPage({ params }: Props) {
                     key={color}
                     onClick={() => {
                       setSelectedColor(color)
-                      setSelectedSize(null) // resetear talle al cambiar color
+                      setSelectedSize(null)
                     }}
                     disabled={!hasStock}
                     className={`px-4 py-2 border rounded-md text-sm transition-all duration-200 ${
@@ -198,10 +188,8 @@ export default function ProductPage({ params }: Props) {
             </div>
           </div>
 
-         
-          {/* Botón comprar */
-          }
-          {!showBrick && false && (
+          {/* Botón comprar */}
+          {!showBrick && (
             <button
               onClick={handleComprar}
               disabled={loading || !selectedSize || !selectedColor || selectedStock === 0}
