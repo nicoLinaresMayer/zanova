@@ -19,6 +19,7 @@ export type ProductVariant = {
   size: string
   stock: number
   price: number | null
+  color_position?: number
 }
 
 export type Product = {
@@ -28,7 +29,6 @@ export type Product = {
   description: string | null
   variants: ProductVariant[]
   images: ProductImage[]
-  // helpers derivados
   colors: string[]
   sizes: string[]
 }
@@ -48,7 +48,9 @@ export async function getProducts(): Promise<Product[]> {
         color,
         size,
         stock,
-        price
+        stock_amoremio,
+        price,
+        color_position
       ),
       product_images (
         url,
@@ -79,7 +81,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
         size,
         stock,
         stock_amoremio,
-        price
+        price,
+        color_position
       ),
       product_images (
         url,
@@ -103,30 +106,34 @@ function mapProduct(p: any): Product {
     size: v.size,
     stock: (v.stock ?? 0) + (v.stock_amoremio ?? 0),
     price: v.price ?? null,
+    color_position: v.color_position ?? 0,
   }))
 
+  // Colores ordenados por color_position
+  const colors = [...new Map(
+    (p.product_variants ?? [])
+      .sort((a: any, b: any) => (a.color_position ?? 0) - (b.color_position ?? 0))
+      .map((v: any) => [v.color, v.color_position])
+  ).keys()]
+
+  // Imágenes ordenadas por color_position primero, luego por position
   const images: ProductImage[] = (p.product_images ?? [])
-    .sort((a: any, b: any) => a.position - b.position)
+    .filter((img: any) => img.position !== 0)
+    .sort((a: any, b: any) => {
+      const colorIndexA = colors.indexOf(a.color)
+      const colorIndexB = colors.indexOf(b.color)
+      if (colorIndexA !== colorIndexB) return colorIndexA - colorIndexB
+      return a.position - b.position
+    })
     .map((img: any) => ({
       url: img.url,
       color: img.color ?? null,
       position: img.position,
     }))
 
-  // colores únicos con stock > 0 primero, sin stock al final
-  const allColors = [...new Set(variants.map(v => v.color))]
-  const colors = [
-    ...allColors.filter(c => variants.some(v => v.color === c && v.stock > 0)),
-    ...allColors.filter(c => variants.every(v => v.color !== c || v.stock === 0)),
-  ]
-
-  // talles únicos
   const SIZE_ORDER = ['S', 'M', 'L', 'XL', 'XXL']
-
   const sizes = [...new Set(variants.map(v => v.size))]
     .sort((a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b))
-
-
 
   return {
     id: p.id,

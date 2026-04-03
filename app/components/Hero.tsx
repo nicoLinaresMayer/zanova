@@ -59,12 +59,12 @@ export default function Hero() {
       <div className="absolute inset-0 bg-black/40" />
 
       <div className="relative z-10 flex h-full flex-col items-center justify-start pt-[20vh] text-pearl">
-        <h1 className="font-zanova text-center leading-none tracking-widest">
-          <span className="block text-[clamp(2.5rem,8vw,6rem)]">
+        <h1 className="text-center leading-none tracking-widest">
+          <span className="block text-[clamp(2.5rem,8vw,6rem)] font-zanova">
             TEMPORADA
           </span>
-          <span className="block text-[clamp(3.5rem,10vw,8rem)] font-bold mt-10">
-            Oto<NWithTilde />o - invierno
+          <span className="block text-[clamp(3.5rem,10vw,8rem)] font-bold mt-10 font-hero ">
+            OTOÑO - INVIERNO
           </span>
         </h1>
 

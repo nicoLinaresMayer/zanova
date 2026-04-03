@@ -138,8 +138,8 @@ export default function ProductPage({ params }: Props) {
           <ProductGallery images={visibleImages} />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold font-zanova">{product.name}</h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-bold font-hero">{product.name}</h1>
           <p className="text-gray-700 text-lg">{product.description}</p>
 
           {/* Colores */}

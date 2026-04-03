@@ -14,9 +14,9 @@ function ProductCard({ p, index }: { p: Product; index: number }) {
   const images = p.images.map(img => img.url)
 
   // Colores y talles únicos con stock > 0
-  const availableColors = [...new Set(
-    p.variants.filter(v => (v.stock ?? 0) > 0).map(v => v.color)
-  )]
+  const availableColors = p.colors.filter(color =>
+    p.variants.some(v => v.color === color && (v.stock ?? 0) > 0)
+  )
   
   const SIZE_ORDER = ['S', 'M', 'L', 'XL', 'XXL']
 
@@ -69,7 +69,7 @@ function ProductCard({ p, index }: { p: Product; index: number }) {
 
       {/* Info */}
       <Link href={`/products/${p.slug}`} className="mt-3 flex flex-col gap-1 px-0.5">
-        <h3 className="font-zanova text-lg uppercase leading-tight">{p.name}</h3>
+        <h3 className="font-hero font-bold text-lg uppercase leading-tight">{p.name}</h3>
 
         <div className="flex items-center gap-3 mt-1">
           {/* Colores */}

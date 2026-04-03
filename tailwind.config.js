@@ -7,6 +7,7 @@ module.exports = {
         zanova: ["var(--font-zanova)"],
         times: ['"Times New Roman"', 'serif'],
         ig:["var(--font-ig)"],
+        hero: ['var(--font-hero)'],
       },
       colors: {
         'light-black': '#161616',       // fondo negro
