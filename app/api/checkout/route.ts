@@ -7,23 +7,22 @@ const client = new MercadoPagoConfig({
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    console.log('1. Body recibido:', JSON.stringify(body))
+   const body = await request.json()
+    const { items, slug, name, price, size, color, buyer } = body
 
-    const { slug, name, price, size, color, buyer } = body
     console.log('2. Buyer:', JSON.stringify(buyer))
 
-   const preference = await new Preference(client).create({
+    const preferenceItems = items ?? [{ slug, name, price, size, color }]
+
+      const preference = await new Preference(client).create({
         body: {
-          items: [
-            {
-              id: slug,
-              title: `${name} — Talle ${size}, Color ${color}`,
-              quantity: 1,
-              unit_price: Number(price),
-              currency_id: 'ARS',
-            }
-          ],
+          items: preferenceItems.map((item: any) => ({
+            id: item.slug,
+            title: `${item.name} — Talle ${item.size}, Color ${item.color}`,
+            quantity: 1,
+            unit_price: Number(item.price),
+            currency_id: 'ARS',
+          })),
           payer: {
             name: buyer.name,
             email: buyer.email,

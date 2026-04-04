@@ -6,6 +6,7 @@ import type { Product } from '@/lib/products'
 import { notFound } from 'next/navigation'
 import ProductGallery from '../../components/ProductGallery'
 import { useRouter } from 'next/navigation'
+import { addToCart } from '@/lib/cart'
 
 declare global {
   interface Window { MercadoPago: any }
@@ -107,18 +108,24 @@ export default function ProductPage({ params }: Props) {
   const selectedStock = selectedVariant?.stock ?? null
 
   async function handleComprar() {
-    if (!selectedSize || !selectedColor) return
+  if (!selectedSize || !selectedColor || !displayPrice) return
 
-    const params = new URLSearchParams({
-      slug: product!.slug,
-      name: product!.name,
-      color: selectedColor,
-      size: selectedSize,
-      price: String(displayPrice ?? ''),
-    })
+  const firstImage = product!.images.find(img => img.color === selectedColor)?.url ?? ''
 
-    router.push(`/checkout?${params.toString()}`)
+  const item = {
+    slug: product!.slug,
+    name: product!.name,
+    color: selectedColor,
+    size: selectedSize,
+    price: displayPrice,
+    image: firstImage,
   }
+  
+  console.log('Agregando al carrito:', item)
+  addToCart(item)
+  window.dispatchEvent(new Event('cart-updated'))
+  window.dispatchEvent(new CustomEvent('open-cart'))
+}
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-4 text-black">
@@ -192,10 +199,10 @@ export default function ProductPage({ params }: Props) {
           {!showBrick && (
             <button
               onClick={handleComprar}
-              disabled={loading || !selectedSize || !selectedColor || selectedStock === 0}
+              disabled={!selectedSize || !selectedColor || selectedStock === 0}
               className="mt-4 bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Cargando...' : !selectedSize ? 'Seleccioná un talle' : 'Comprar'}
+              {!selectedSize ? 'Seleccioná un talle' : 'Agregar al carrito'}
             </button>
           )}
 

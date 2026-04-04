@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { clearCart } from '@/lib/cart'
 
 type Order = {
   product_name: string
@@ -27,6 +28,10 @@ function GraciasContent() {
         city: 'bahia-blanca',
         name: 'Nico',
     })
+
+      clearCart()
+        window.dispatchEvent(new Event('cart-updated'))
+
     }, [preferenceId])
 
   return (
