@@ -33,6 +33,7 @@ export async function POST(request: Request) {
             pending: `${process.env.NEXT_PUBLIC_BASE_URL}/pendiente`,
           },
           auto_return: 'approved',
+          notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhook`
         }
       })
     console.log('3. Preferencia creada:', preference.id)
