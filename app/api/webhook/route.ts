@@ -11,18 +11,17 @@ export async function POST(request: Request) {
     console.log('Webhook recibido:', JSON.stringify(body))
 
     // MP manda distintos tipos de notificaciones — solo nos interesan los pagos
-   // MP puede mandar "payment" o "merchant_order"
-    if (body.type !== 'payment' && body.topic !== 'payment') {
-    return Response.json({ ok: true })
+    if (body.type !== 'payment') {
+      return Response.json({ ok: true })
     }
 
-    const paymentId = body.data?.id ?? body.resource?.split('/').pop()
+    const paymentId = body.data?.id
     if (!paymentId) {
       return Response.json({ ok: true })
     }
 
     // Consultamos a MP los detalles reales del pago
-    const payment = await new Payment(client).get({ id: paymentId })
+    const payment = await new Payment(client).get({ id: paymentId }) as any
     console.log('Pago:', payment.status, payment.external_reference)
 
     if (payment.status === 'approved') {
