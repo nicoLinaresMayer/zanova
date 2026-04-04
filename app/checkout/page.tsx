@@ -76,7 +76,8 @@ function CheckoutForm() {
         })
       })
       const { init_point } = await res.json()
-      window.location.href = init_point
+      //window.location.href = init_point
+      //window.location.href = '/gracias
     } catch (err) {
       console.error(err)
       setLoading(false)
