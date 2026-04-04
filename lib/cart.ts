@@ -21,7 +21,7 @@ export function getCart(): CartItem[] {
 
 export function addToCart(item: CartItem): void {
   const cart = getCart()
-  // Si ya existe el mismo producto + color + talle, no duplicar
+  // Si ya existe el mismo producto +  color + talle, no duplicar
   const exists = cart.some(
     i => i.slug === item.slug && i.color === item.color && i.size === item.size
   )
