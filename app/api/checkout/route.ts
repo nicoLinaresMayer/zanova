@@ -36,7 +36,7 @@ export async function POST(request: Request) {
           notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhook`
         }
       })
-    console.log('3. Preferencia creada:', preference.id)
+    console.log('3. Preferencia creada :', preference.id)
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
