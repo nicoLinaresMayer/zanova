@@ -1,9 +1,11 @@
+import Script from 'next/script'
 import './globals.css'
 import localFont from 'next/font/local'
 import { ReactNode } from 'react'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import { Cormorant_Garamond } from 'next/font/google'
+
 
 const heroFont = Cormorant_Garamond({
   subsets: ['latin'],
@@ -43,7 +45,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Header />
         <div className="h-16"> {/* espacio igual al header */} </div>
         {children}
-        <Footer />
+                <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-TFMK8QMCR3"
+          strategy="afterInteractive"
+        />
+
+        <Script id="ga">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-TFMK8QMCR3');
+          `}
+        </Script>
       </body>
     </html>
   )
