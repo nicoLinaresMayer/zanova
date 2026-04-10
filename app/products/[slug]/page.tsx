@@ -22,6 +22,7 @@ export default function ProductPage({ params }: Props) {
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showBrick, setShowBrick] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -51,7 +52,11 @@ export default function ProductPage({ params }: Props) {
   if (!mounted || !product) return (
     <div className="max-w-6xl mx-auto px-6 py-4">
       <div className="grid md:grid-cols-2 gap-6 items-start animate-pulse">
+
+        {/* Skeleton galería */}
         <div className="w-full aspect-[3/4] bg-neutral-200 rounded-xl" />
+
+        {/* Skeleton info */}
         <div className="flex flex-col gap-4">
           <div className="h-8 bg-neutral-200 rounded w-3/4" />
           <div className="h-4 bg-neutral-200 rounded w-full" />
@@ -82,6 +87,7 @@ export default function ProductPage({ params }: Props) {
     .filter(img => img.color === selectedColor)
     .map(img => img.url)
 
+  // Talles disponibles para el color seleccionado
   const SIZE_ORDER = ['S', 'M', 'L', 'XL', 'XXL']
 
   const sizesForColor = product.variants
@@ -98,22 +104,25 @@ export default function ProductPage({ params }: Props) {
   const selectedStock = selectedVariant?.stock ?? null
 
   async function handleComprar() {
-    if (!selectedSize || !selectedColor || !displayPrice) return
+  if (!selectedSize || !selectedColor || !displayPrice) return
 
-    const firstImage = product!.images.find(img => img.color === selectedColor)?.url ?? ''
+  const imagesOfColor = product!.images.filter(img => img.color === selectedColor)
+  const cartImage = imagesOfColor[1]?.url ?? imagesOfColor[0]?.url ?? ''
 
-    addToCart({
-      slug: product!.slug,
-      name: product!.name,
-      color: selectedColor,
-      size: selectedSize,
-      price: displayPrice,
-      image: firstImage,
-    })
-
-    window.dispatchEvent(new Event('cart-updated'))
-    window.dispatchEvent(new CustomEvent('open-cart'))
+  const item = {
+    slug: product!.slug,
+    name: product!.name,
+    color: selectedColor,
+    size: selectedSize,
+    price: displayPrice,
+    image: cartImage,
   }
+  
+  console.log('Agregando al carrito:', item)
+  addToCart(item)
+  window.dispatchEvent(new Event('cart-updated'))
+  window.dispatchEvent(new CustomEvent('open-cart'))
+}
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-4 text-black">
@@ -184,13 +193,15 @@ export default function ProductPage({ params }: Props) {
           </div>
 
           {/* Botón comprar */}
-          <button
-            onClick={handleComprar}
-            disabled={loading || !selectedSize || !selectedColor || selectedStock === 0}
-            className="mt-4 bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {!selectedSize ? 'Seleccioná un talle' : 'Agregar al carrito'}
-          </button>
+          {!showBrick && (
+            <button
+              onClick={handleComprar}
+              disabled={!selectedSize || !selectedColor || selectedStock === 0}
+              className="mt-4 bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {!selectedSize ? 'Seleccioná un talle' : 'Agregar al carrito'}
+            </button>
+          )}
 
           <div id="payment-brick-container" />
         </div>
