@@ -98,13 +98,19 @@ export default function CartDrawer({ open, onClose }: Props) {
                   <span className="text-sm text-neutral-500 uppercase tracking-wider">Total</span>
                   <span className="font-medium text-lg">$ {total.toLocaleString('es-AR')}</span>
                 </div>
-                <Link
-                  href={`/checkout?${checkoutParams}`}
-                  onClick={onClose}
-                  className="block w-full bg-black text-white text-center py-4 text-sm uppercase tracking-widest hover:bg-neutral-800 transition"
-                >
-                  Finalizar compra
-                </Link>
+                {process.env.NEXT_PUBLIC_CHECKOUT_ENABLED === 'true' ? (
+                  <Link
+                    href={`/checkout?${checkoutParams}`}
+                    onClick={onClose}
+                    className="block w-full bg-black text-white text-center py-4 text-sm uppercase tracking-widest hover:bg-neutral-800 transition"
+                  >
+                    Finalizar compra
+                  </Link>
+                ) : (
+                  <div className="block w-full bg-neutral-200 text-neutral-400 text-center py-4 text-sm uppercase tracking-widest cursor-not-allowed">
+                    Compras habilitadas en los próximos días
+                  </div>
+                )}
               </div>
             )}
           </motion.div>
