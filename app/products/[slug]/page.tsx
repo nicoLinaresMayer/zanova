@@ -110,7 +110,8 @@ export default function ProductPage({ params }: Props) {
   async function handleComprar() {
   if (!selectedSize || !selectedColor || !displayPrice) return
 
-  const firstImage = product!.images.find(img => img.color === selectedColor)?.url ?? ''
+  const imagesOfColor = product!.images.filter(img => img.color === selectedColor)
+  const cartImage = imagesOfColor[1]?.url ?? imagesOfColor[0]?.url ?? ''
 
   const item = {
     slug: product!.slug,
@@ -118,7 +119,7 @@ export default function ProductPage({ params }: Props) {
     color: selectedColor,
     size: selectedSize,
     price: displayPrice,
-    image: firstImage,
+    image: cartImage,
   }
   
   console.log('Agregando al carrito:', item)
