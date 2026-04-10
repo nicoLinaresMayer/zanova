@@ -37,6 +37,22 @@ const igFont = localFont({
 })
 
 
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Zanova',
+  description: 'Tienda oficial de Zanova by Zaida Nuez. Drops limitados de ropa',
+  openGraph: {
+    title: 'Zanova',
+    description: 'Drops limitados de ropa de diseño',
+    url: 'https://zanova.com.ar',
+    siteName: 'Zanova',
+    locale: 'es_AR',
+    type: 'website',
+  },
+}
+
+
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
