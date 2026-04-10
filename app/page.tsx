@@ -2,7 +2,7 @@ import HeroImage from './components/HeroImage'
 import ProductsFetch from './components/ProductsFetch'
 
 export const metadata = {
-  title: 'Zanova ✦',
+  title: 'Zanova - Diseños exclusivos',
   description: 'Tienda oficial de Zanova'
 }
 
