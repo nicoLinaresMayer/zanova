@@ -61,6 +61,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Header />
         <div className="h-16"> {/* espacio igual al header */} </div>
         {children}
+         <Footer />
                 <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-TFMK8QMCR3"
           strategy="afterInteractive"
