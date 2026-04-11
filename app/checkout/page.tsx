@@ -163,18 +163,29 @@ function CheckoutForm() {
               {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
             </div>
 
-            <div>
-              <select
-                className={`${inputClass('city')} cursor-pointer`}
-                value={formData.city}
-                onChange={e => setFormData(p => ({ ...p, city: e.target.value }))}
-              >
-                <option value="">Retiro en:</option>
-                <option value="bahia-blanca">Bahía Blanca</option>
-                <option value="carmen-patagones">Carmen de Patagones</option>
-              </select>
-              {errors.city && <p className="text-red-400 text-xs mt-1">{errors.city}</p>}
-            </div>
+            <div className="space-y-2">
+                <p className="text-sm text-neutral-400">Retiro en</p>
+                <div className="flex gap-3">
+                  {[
+                    { value: 'bahia-blanca', label: 'Bahía Blanca' },
+                    { value: 'carmen-patagones', label: 'Carmen de Patagones' },
+                  ].map(option => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setFormData(p => ({ ...p, city: option.value }))}
+                      className={`flex-1 py-3 border text-sm transition-all duration-200 ${
+                        formData.city === option.value
+                          ? 'bg-black text-white border-black'
+                          : 'bg-white text-black border-black/20 hover:border-black'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                {errors.city && <p className="text-red-400 text-xs mt-1">{errors.city}</p>}
+              </div>
           </div>
 
           <button
