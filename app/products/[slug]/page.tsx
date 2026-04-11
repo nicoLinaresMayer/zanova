@@ -16,6 +16,9 @@ type Props = {
   params: Promise<{ slug: string }>
 }
 
+
+
+
 export default function ProductPage({ params }: Props) {
   const [product, setProduct] = useState<Product | null>(null)
   const [mounted, setMounted] = useState(false)
@@ -24,6 +27,34 @@ export default function ProductPage({ params }: Props) {
   const [loading, setLoading] = useState(false)
   const [showBrick, setShowBrick] = useState(false)
   const router = useRouter()
+
+  //Estamos de notificacion de stock
+  const [showNotifyModal, setShowNotifyModal] = useState(false)
+  const [notifyEmail, setNotifyEmail] = useState('')
+  const [notifyRequested, setNotifyRequested] = useState(false)
+  const [notifyLoading, setNotifyLoading] = useState(false)
+  const [notifyPhone, setNotifyPhone] = useState('')
+
+
+    async function handleNotify() {
+      if (!notifyEmail || !selectedSize || !selectedColor) return
+      setNotifyLoading(true)
+      await fetch('/api/notify-stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: notifyEmail,
+          phone: notifyPhone || null,
+          slug: product!.slug,
+          name: product!.name,
+          color: selectedColor,
+          size: selectedSize,
+        })
+      })
+      setNotifyLoading(false)
+      setShowNotifyModal(false)
+      setNotifyRequested(true)
+    }
 
   useEffect(() => {
     setMounted(true)
@@ -83,6 +114,10 @@ export default function ProductPage({ params }: Props) {
     </div>
   )
 
+
+
+
+
   const visibleImages = product.images
     .filter(img => img.color === selectedColor)
     .map(img => img.url)
@@ -105,6 +140,7 @@ export default function ProductPage({ params }: Props) {
 
   async function handleComprar() {
   if (!selectedSize || !selectedColor || !displayPrice) return
+  
 
   const imagesOfColor = product!.images.filter(img => img.color === selectedColor)
   const cartImage = imagesOfColor[1]?.url ?? imagesOfColor[0]?.url ?? ''
@@ -124,6 +160,8 @@ export default function ProductPage({ params }: Props) {
   window.dispatchEvent(new CustomEvent('open-cart'))
 }
 
+
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-4 text-black">
       <div className="grid md:grid-cols-2 gap-6 items-start">
@@ -140,12 +178,17 @@ export default function ProductPage({ params }: Props) {
           <h1 className="text-3xl font-bold font-hero">{product.name}</h1>
           <p className="text-gray-700 text-lg">{product.description}</p>
 
+          {displayPrice && (
+            <p className="text-xl font-medium text-black">
+              $ {Number(displayPrice).toLocaleString('es-AR')}
+            </p>
+          )}
           {/* Colores */}
           <div>
-            <span className="mr-2 font-medium">Colores disponibles:</span>
+            <span className="mr-2 font-medium">Colores:</span>
             <div className="flex flex-wrap gap-2 mt-2">
               {product.colors.map(color => {
-                const hasStock = product.variants.some(v => v.color === color && v.stock > 0)
+                const hasStock = product.variants.some(v => v.color === color && (v.stock + (v.stock_amoremio ?? 0)) > 0)
                 return (
                   <button
                     key={color}
@@ -170,27 +213,44 @@ export default function ProductPage({ params }: Props) {
           </div>
 
           {/* Talles */}
-          <div>
-            <span className="mr-2 font-medium">Talles disponibles:</span>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {sizesForColor.map(variant => (
-                <button
-                  key={variant.size}
-                  onClick={() => setSelectedSize(variant.size === selectedSize ? null : variant.size)}
-                  disabled={variant.stock === 0}
-                  className={`px-4 py-2 border rounded-md text-sm transition-all duration-200 ${
-                    selectedSize === variant.size
-                      ? 'bg-black text-white border-black'
-                      : variant.stock > 0
-                      ? 'bg-white text-black border-gray-300 hover:bg-gray-100'
-                      : 'bg-white text-gray-300 border-gray-200 cursor-not-allowed line-through'
-                  }`}
-                >
-                  {variant.size}
-                </button>
-              ))}
-            </div>
-          </div>
+      <div>
+        <span className="mr-2 font-medium">Talles:</span>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {sizesForColor.map(variant => (
+            <button
+              key={variant.size}
+              onClick={() => {
+                setSelectedSize(variant.size === selectedSize ? null : variant.size)
+                setNotifyRequested(false)
+              }}
+             className={`px-4 py-2 border rounded-md text-sm transition-all duration-200 ${
+              selectedSize === variant.size
+                ? 'bg-black text-white border-black'
+                : 'bg-white text-black border-gray-300 hover:bg-gray-100'
+            }`}
+            >
+              {variant.size}
+            </button>
+          ))}
+        </div>
+
+  {/* Aviso sin stock */}
+{selectedSize && selectedVariant && selectedVariant.stock === 0 && (
+  <div className="mt-3 p-3 bg-neutral-50 border border-neutral-200 rounded-lg space-y-2">
+    <p className="text-xs text-neutral-500 uppercase tracking-[0.2em]">Talle sin stock</p>
+    {notifyRequested ? (
+      <p className="text-xs text-green-600 font-hero">¡Listo! Te avisamos cuando esté disponible.</p>
+    ) : (
+      <button
+        onClick={() => setShowNotifyModal(true)}
+        className="text-xs border border-black px-4 py-2 rounded-md hover:bg-black hover:text-white transition"
+      >
+        Avisarme cuando esté disponible
+      </button>
+    )}
+  </div>
+)}
+</div>
 
           {/* Botón comprar */}
           {!showBrick && (
@@ -199,13 +259,55 @@ export default function ProductPage({ params }: Props) {
               disabled={!selectedSize || !selectedColor || selectedStock === 0}
               className="mt-4 bg-black text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {!selectedSize ? 'Seleccioná un talle' : 'Agregar al carrito'}
+              {!selectedSize ? 'Seleccioná un talle' : selectedStock === 0 ? 'Sin stock' : 'Agregar al carrito'}
             </button>
           )}
 
           <div id="payment-brick-container" />
         </div>
       </div>
+
+
+      {/* Modal avisarme */}
+{showNotifyModal && (
+  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-6">
+    <div className="bg-white rounded-xl p-6 w-full max-w-sm space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="font-medium text-sm">Avisarme cuando esté disponible</p>
+        <button onClick={() => setShowNotifyModal(false)} className="text-gray-400 hover:text-black text-lg">✕</button>
+      </div>
+
+      <p className="text-xs text-neutral-500">
+       Te avisamos cuando <span className="text-black font-medium">{product?.name} · {selectedColor} · Talle {selectedSize}</span> vuelva a tener stock.
+      </p>
+
+      <input
+      type="email"
+      placeholder="Tu email *"
+      value={notifyEmail}
+      onChange={e => setNotifyEmail(e.target.value)}
+      className="w-full border-b border-black/20 bg-transparent py-3 text-sm focus:outline-none focus:border-black transition placeholder:text-neutral-400"
+    />
+    <input
+      type="tel"
+      placeholder="WhatsApp (opcional)"
+      value={notifyPhone}
+      onChange={e => setNotifyPhone(e.target.value)}
+      className="w-full border-b border-black/20 bg-transparent py-3 text-sm focus:outline-none focus:border-black transition placeholder:text-neutral-400"
+    />
+
+      <button
+        onClick={handleNotify}
+        disabled={notifyLoading || !notifyEmail}
+        className="w-full bg-black text-white py-3 text-sm uppercase tracking-widest hover:bg-neutral-800 transition disabled:opacity-50"
+      >
+        {notifyLoading ? 'Guardando...' : 'Notificarme'}
+      </button>
+    </div>
+  </div>
+)}
+
+
     </div>
   )
 }

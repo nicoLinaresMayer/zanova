@@ -18,8 +18,10 @@ export type ProductVariant = {
   color: string
   size: string
   stock: number
+  stock_amoremio: number
   price: number | null
   color_position?: number
+  active: boolean
 }
 
 export type Product = {
@@ -31,6 +33,7 @@ export type Product = {
   images: ProductImage[]
   colors: string[]
   sizes: string[]
+  active: boolean
 }
 
 export async function getProducts(): Promise<Product[]> {
@@ -50,7 +53,8 @@ export async function getProducts(): Promise<Product[]> {
         stock,
         stock_amoremio,
         price,
-        color_position
+        color_position,
+        active
       ),
       product_images (
         url,
@@ -58,6 +62,7 @@ export async function getProducts(): Promise<Product[]> {
         position
       )
     `)
+    .eq('active', true)
     .order('position', { ascending: true })
 
   if (error) throw new Error(`Error cargando productos: ${error.message}`)
@@ -75,6 +80,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       slug,
       name,
       description,
+      active,
       product_variants (
         id,
         color,
@@ -82,7 +88,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
         stock,
         stock_amoremio,
         price,
-        color_position
+        color_position,
+        active
       ),
       product_images (
         url,
@@ -95,16 +102,19 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     .single()
 
   if (error) return null
-
+  
   return mapProduct(data)
 }
 
 function mapProduct(p: any): Product {
-  const variants: ProductVariant[] = (p.product_variants ?? []).map((v: any) => ({
+  const variants: ProductVariant[] = (p.product_variants ?? [])
+  .filter((v: ProductVariant) => v.active === true)
+  .map((v: ProductVariant) => ({
     id: v.id,
     color: v.color,
     size: v.size,
-    stock: (v.stock ?? 0) + (v.stock_amoremio ?? 0),
+    stock: v.stock ?? 0,
+    stock_amoremio: v.stock_amoremio ?? 0,
     price: v.price ?? null,
     color_position: v.color_position ?? 0,
   }))
@@ -135,7 +145,7 @@ function mapProduct(p: any): Product {
   const sizes = ([...new Set(variants.map(v => v.size))] as string[])
   .sort((a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b))
 
-  return {
+  const dataToReturn = {
     id: p.id,
     slug: p.slug,
     name: p.name,
@@ -144,7 +154,10 @@ function mapProduct(p: any): Product {
     images,
     colors,
     sizes,
-  }
+    active: p.active
+  };
+  console.log(dataToReturn);
+  return dataToReturn
 }
 
 export async function getHeroImage(): Promise<string | null> {

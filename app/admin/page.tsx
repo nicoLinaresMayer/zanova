@@ -9,6 +9,7 @@ type Variant = {
   stock_amoremio: number
   price: number | null
   color_position: number
+  active?: boolean
 }
 
 type Image = {
@@ -24,6 +25,7 @@ type Product = {
   slug: string
   description: string | null
   position: number
+  active: boolean
   product_variants: Variant[]
   product_images: Image[]
 }
@@ -31,7 +33,7 @@ type Product = {
 export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [tab, setTab] = useState<'productos' | 'imagenes' | 'stock' | 'nuevo'>('productos')
+  const [tab, setTab] = useState<'productos' | 'imagenes' | 'stock' | 'nuevo' | 'stock-rapido'>('productos')
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
 
@@ -57,8 +59,11 @@ export default function AdminPage() {
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null)
   const [expandedVariant, setExpandedVariant] = useState<string | null>(null)
   const [globalPrice, setGlobalPrice] = useState<string>('')
-
   const [variantBatchEdits, setVariantBatchEdits] = useState<Record<string, Partial<Variant>>>({})
+
+  const [stockEdits, setStockEdits] = useState<Record<string, { stock?: number, stock_amoremio?: number }>>({})
+  const [expandedStockProduct, setExpandedStockProduct] = useState<string | null>(null)
+
 
   useEffect(() => { fetchProducts() }, [])
 
@@ -92,6 +97,26 @@ export default function AdminPage() {
     await fetchProducts()
     setLoading(false)
     notify('Producto guardado')
+  }
+
+  async function toggleProduct(id: string, active: boolean) {
+    await fetch('/api/admin/products', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, active })
+    })
+    await fetchProducts()
+    notify(active ? 'Producto publicado' : 'Producto despublicado')
+  }
+
+  async function toggleVariant(id: string, active: boolean) {
+    await fetch('/api/admin/variants', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, active })
+    })
+    await fetchProducts()
+    notify(active ? 'Variante activada' : 'Variante desactivada')
   }
 
   function editVariant(id: string, field: string, value: any) {
@@ -172,6 +197,7 @@ export default function AdminPage() {
           stock: varStock, stock_amoremio: varStockA,
           price: varPrice ? Number(varPrice) : null,
           color_position: varColorPos,
+          active: false,
         })
       })
     ))
@@ -198,7 +224,7 @@ export default function AdminPage() {
     await fetch('/api/admin/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName, slug: newSlug, description: newDesc || null, position: newPos })
+      body: JSON.stringify({ name: newName, slug: newSlug, description: newDesc || null, position: newPos, active: false })
     })
     setNewName(''); setNewSlug(''); setNewDesc(''); setNewPos(0)
     await fetchProducts()
@@ -225,8 +251,8 @@ export default function AdminPage() {
   }
 
   function editVariantBatch(id: string, field: string, value: any) {
-  setVariantBatchEdits(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }))
-}
+    setVariantBatchEdits(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }))
+  }
 
   async function saveAllVariants() {
     setLoading(true)
@@ -245,7 +271,35 @@ export default function AdminPage() {
     notify('Variantes guardadas')
   }
 
+  async function saveAllStock() {
+    setLoading(true)
+    await Promise.all(
+      Object.entries(stockEdits).map(([id, changes]) =>
+        fetch('/api/admin/variants', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, ...changes })
+        })
+      )
+    )
+    setStockEdits({})
+    await fetchProducts()
+    setLoading(false)
+    notify('Stock actualizado')
+  }
 
+
+  // Toggle component
+  function Toggle({ active, onChange }: { active: boolean, onChange: (v: boolean) => void }) {
+    return (
+      <button
+        onClick={() => onChange(!active)}
+        className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${active ? 'bg-black' : 'bg-gray-200'}`}
+      >
+        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${active ? 'translate-x-5' : 'translate-x-0.5'}`} />
+      </button>
+    )
+  }
 
   const inputClass = "border border-gray-300 rounded px-3 py-1.5 text-sm w-full focus:outline-none focus:border-black"
   const btnClass = "bg-black text-white px-4 py-1.5 text-sm rounded hover:bg-gray-800 transition disabled:opacity-50"
@@ -269,11 +323,158 @@ export default function AdminPage() {
       )}
 
       <div className="flex border-b border-gray-200 mb-6">
+        <button className={tabClass('stock-rapido')} onClick={() => setTab('stock-rapido')}>Resumen stock</button>
         <button className={tabClass('productos')} onClick={() => setTab('productos')}>Productos</button>
         <button className={tabClass('imagenes')} onClick={() => setTab('imagenes')}>Imágenes</button>
         <button className={tabClass('stock')} onClick={() => setTab('stock')}>Stock & Variantes</button>
         <button className={tabClass('nuevo')} onClick={() => setTab('nuevo')}>Nuevo Producto</button>
       </div>
+
+            {/* ── STOCK RÁPIDO ── */}
+      {tab === 'stock-rapido' && (
+        <div className="space-y-4">
+          <p className="text-xs text-gray-400 uppercase tracking-wider">
+            Actualizá el stock de todas las variantes — guardá cuando termines
+          </p>
+
+          {/* Botón guardar global */}
+          {Object.keys(stockEdits).length > 0 && (
+            <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded px-4 py-2">
+              <span className="text-xs text-orange-600">
+                {Object.keys(stockEdits).length} variante{Object.keys(stockEdits).length > 1 ? 's' : ''} con cambios sin guardar
+              </span>
+              <div className="flex gap-2">
+                <button onClick={() => setStockEdits({})} className="text-xs text-gray-500 hover:text-gray-800 border border-gray-300 px-3 py-1.5 rounded transition">
+                  Cancelar
+                </button>
+                <button onClick={saveAllStock} disabled={loading} className={btnClass}>
+                  Guardar todo
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Productos agrupados */}
+          <div className="space-y-2">
+            {products.map(p => (
+              <div key={p.id} className={`border rounded overflow-hidden ${!p.active ? 'opacity-50' : 'border-gray-200'}`}>
+                
+                {/* Header del producto */}
+                <div
+              className="px-4 py-3 cursor-pointer hover:bg-gray-50 transition"
+              onClick={() => setExpandedStockProduct(expandedStockProduct === p.id ? null : p.id)}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <span className="font-medium text-sm">{p.name}</span>
+                  {!p.active && <span className="text-[10px] uppercase tracking-wider text-gray-400 border border-gray-200 px-2 py-0.5 rounded">inactivo</span>}
+                </div>
+                <div className="flex items-center gap-3">
+                  {p.product_variants.some(v => stockEdits[v.id]) && (
+                    <span className="text-xs text-orange-400 font-medium">Sin guardar</span>
+                  )}
+                  <span className="text-gray-400 text-sm">
+                    {expandedStockProduct === p.id ? '▲' : '▶'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Resumen de stock por variante */}
+              <div className="flex flex-wrap gap-1.5">
+                {sortedVariants(p.product_variants).map(v => {
+                  const editedStock = (stockEdits[v.id]?.stock ?? v.stock) + (stockEdits[v.id]?.stock_amoremio ?? v.stock_amoremio)
+                  return (
+                    <span
+                      key={v.id}
+                      className={`text-[10px] px-2 py-0.5 rounded border ${
+                        editedStock === 0
+                          ? 'bg-red-50 border-red-200 text-red-500'
+                          : editedStock <= 3
+                          ? 'bg-orange-50 border-orange-200 text-orange-500'
+                          : 'bg-green-50 border-green-200 text-green-600'
+                      }`}
+                    >
+                      {v.color} {v.size} · {editedStock}
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+
+                {/* Variantes expandidas */}
+                {expandedStockProduct === p.id && (
+                  <div className="border-t border-gray-100">
+                    {/* Headers */}
+                    <div className="grid grid-cols-4 gap-3 px-4 py-2 bg-gray-50 text-[10px] uppercase tracking-widest text-gray-400">
+                      <span>Color · Talle</span>
+                      <span className="text-center">Stock propio</span>
+                      <span className="text-center">Stock Amoremio</span>
+                      <span className="text-center">Total</span>
+                    </div>
+
+                    {sortedVariants(p.product_variants).map(v => {
+                      const editedStock = stockEdits[v.id]?.stock ?? v.stock
+                      const editedStockA = stockEdits[v.id]?.stock_amoremio ?? v.stock_amoremio
+                      const total = editedStock + editedStockA
+                      const hasEdits = !!stockEdits[v.id]
+
+                      return (
+                        <div
+                          key={v.id}
+                          className={`grid grid-cols-4 gap-3 px-4 py-2.5 border-b border-gray-50 items-center ${!v.active ? 'opacity-40' : ''}`}
+                        >
+                          {/* Color · Talle */}
+                          <div className="flex items-center gap-2">
+                            {hasEdits && <span className="w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0" />}
+                            <span className="text-sm">{v.color}</span>
+                            <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{v.size}</span>
+                          </div>
+
+                          {/* Stock propio */}
+                          <div className="text-center">
+                            <input
+                              type="number"
+                              defaultValue={v.stock}
+                              min={0}
+                              className={`border rounded px-2 py-1 w-20 text-sm text-center ${hasEdits && stockEdits[v.id]?.stock !== undefined ? 'border-orange-300 bg-orange-50' : 'border-gray-200'}`}
+                              onChange={e => setStockEdits(prev => ({
+                                ...prev,
+                                [v.id]: { ...prev[v.id], stock: Number(e.target.value) }
+                              }))}
+                            />
+                          </div>
+
+                          {/* Stock Amoremio */}
+                          <div className="text-center">
+                            <input
+                              type="number"
+                              defaultValue={v.stock_amoremio}
+                              min={0}
+                              className={`border rounded px-2 py-1 w-20 text-sm text-center ${hasEdits && stockEdits[v.id]?.stock_amoremio !== undefined ? 'border-orange-300 bg-orange-50' : 'border-gray-200'}`}
+                              onChange={e => setStockEdits(prev => ({
+                                ...prev,
+                                [v.id]: { ...prev[v.id], stock_amoremio: Number(e.target.value) }
+                              }))}
+                            />
+                          </div>
+
+                          {/* Total */}
+                          <div className="text-center">
+                            <span className={`text-sm font-medium ${total === 0 ? 'text-red-400' : total <= 3 ? 'text-orange-400' : 'text-green-600'}`}>
+                              {total}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
 
       {/* ── PRODUCTOS ── */}
       {tab === 'productos' && (
@@ -282,24 +483,29 @@ export default function AdminPage() {
             Editá los campos directamente — guardá cuando termines
           </p>
 
-
           {/* MOBILE */}
           <div className="md:hidden space-y-2">
             {products.map(p => (
-              <div key={p.id} className="border border-gray-200 rounded overflow-hidden">
-                <button
-                  className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition"
-                  onClick={() => setExpandedProduct(expandedProduct === p.id ? null : p.id)}
-                >
-                  <div>
-                    <span className="font-medium text-sm">{productEdits[p.id]?.name ?? p.name}</span>
-                    <span className="ml-3 text-xs text-gray-400 font-mono">{p.slug}</span>
+              <div key={p.id} className={`border rounded overflow-hidden ${p.active ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}>
+                <div className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition">
+                  <div className="flex items-center gap-3 flex-1">
+                    <Toggle active={p.active} onChange={v => toggleProduct(p.id, v)} />
+                    <div
+                      className="flex-1 text-left cursor-pointer"
+                      onClick={() => setExpandedProduct(expandedProduct === p.id ? null : p.id)}
+                    >
+                      <span className="font-medium text-sm">{productEdits[p.id]?.name ?? p.name}</span>
+                      <span className="ml-3 text-xs text-gray-400 font-mono">{p.slug}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div
+                    className="flex items-center gap-3 cursor-pointer"
+                    onClick={() => setExpandedProduct(expandedProduct === p.id ? null : p.id)}
+                  >
                     {productEdits[p.id] && <span className="text-xs text-orange-400 font-medium">Sin guardar</span>}
                     <span className="text-gray-400 text-sm">{expandedProduct === p.id ? '▲' : '▶'}</span>
                   </div>
-                </button>
+                </div>
                 {expandedProduct === p.id && (
                   <div className="px-4 pb-4 pt-2 border-t border-gray-100 space-y-3">
                     <div className="space-y-1">
@@ -340,6 +546,7 @@ export default function AdminPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-widest text-gray-400 border-b">
+                  <th className="pb-2 pr-4">Publicado</th>
                   <th className="pb-2 pr-4">Nombre</th>
                   <th className="pb-2 pr-4">Slug</th>
                   <th className="pb-2 pr-4">Descripción</th>
@@ -350,7 +557,10 @@ export default function AdminPage() {
               </thead>
               <tbody>
                 {products.map(p => (
-                  <tr key={p.id} className="border-b border-gray-100 align-top">
+                  <tr key={p.id} className={`border-b border-gray-100 align-top ${!p.active ? 'opacity-50' : ''}`}>
+                    <td className="py-3 pr-4">
+                      <Toggle active={p.active} onChange={v => toggleProduct(p.id, v)} />
+                    </td>
                     <td className="py-3 pr-4">
                       <input defaultValue={p.name} className="border border-gray-200 rounded px-2 py-1 text-sm w-40" onChange={e => editProduct(p.id, 'name', e.target.value)} />
                     </td>
@@ -384,18 +594,28 @@ export default function AdminPage() {
         </div>
       )}
 
+
       {/* ── IMÁGENES ── */}
       {tab === 'imagenes' && (
         <div className="space-y-6">
           <select className={inputClass} value={selectedId ?? ''} onChange={e => { setSelectedId(e.target.value || null); setImageEdits({}) }}>
             <option value="">— Elegí un producto —</option>
-            {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {products.map(p => <option key={p.id} value={p.id}>{p.name} {!p.active ? '(inactivo)' : ''}</option>)}
           </select>
 
           {selected && (
             <>
+              {Object.keys(imageEdits).length > 0 && (
+                <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded px-4 py-2">
+                  <span className="text-xs text-orange-600">
+                    {Object.keys(imageEdits).length} imagen{Object.keys(imageEdits).length > 1 ? 'es' : ''} con cambios sin guardar
+                  </span>
+                  <button onClick={saveAllImages} disabled={loading} className={btnClass}>
+                    Guardar todo
+                  </button>
+                </div>
+              )}
 
-              {/* Imágenes agrupadas por color */}
               {(() => {
                 const byColor: Record<string, Image[]> = {}
                 for (const img of selected.product_images.sort((a, b) => a.position - b.position)) {
@@ -409,29 +629,20 @@ export default function AdminPage() {
                     <div className="space-y-2">
                       {imgs.map(img => (
                         <div key={img.id} className="flex items-center gap-3 bg-gray-50 rounded px-3 py-2">
-                          <img
-                            src={imageEdits[img.id]?.url ?? img.url}
-                            className="w-12 h-12 object-cover rounded flex-shrink-0"
-                          />
-
+                          <img src={imageEdits[img.id]?.url ?? img.url} className="w-12 h-12 object-cover rounded flex-shrink-0" />
                           <input
                             className="text-xs text-gray-500 flex-1 border border-transparent hover:border-gray-300 focus:border-black rounded px-2 py-1 transition bg-transparent"
                             defaultValue={img.url}
                             onChange={e => editImage(img.id, 'url', e.target.value)}
                             placeholder="URL"
                           />
-
                           <input
                             type="number"
                             className={`text-xs border rounded px-2 py-1 w-16 transition ${imageEdits[img.id]?.position !== undefined ? 'border-orange-300 bg-orange-50' : 'border-transparent hover:border-gray-300 focus:border-black bg-transparent'}`}
                             defaultValue={img.position}
                             onChange={e => editImage(img.id, 'position', Number(e.target.value))}
                           />
-
-                          {imageEdits[img.id] && (
-                            <span className="text-orange-400 text-xs flex-shrink-0">•</span>
-                          )}
-
+                          {imageEdits[img.id] && <span className="text-orange-400 text-xs flex-shrink-0">•</span>}
                           <button onClick={() => deleteImage(img.id)} className="text-red-400 hover:text-red-600 text-xs flex-shrink-0">✕</button>
                         </div>
                       ))}
@@ -440,7 +651,6 @@ export default function AdminPage() {
                 ))
               })()}
 
-              {/* Colores sin imágenes */}
               {(() => {
                 const coloresConImagenes = new Set(selected.product_images.filter(img => img.color).map(img => img.color))
                 const coloresSinImagenes = [...new Set(selected.product_variants.map(v => v.color))].filter(color => !coloresConImagenes.has(color))
@@ -460,7 +670,6 @@ export default function AdminPage() {
                 )
               })()}
 
-              {/* Form agregar imagen */}
               <div className="border border-gray-200 rounded p-4 space-y-3">
                 <p className="text-sm font-medium">Agregar imagen</p>
                 <div className="space-y-1">
@@ -489,102 +698,94 @@ export default function AdminPage() {
         <div className="space-y-6">
           <select className={inputClass} value={selectedId ?? ''} onChange={e => { setSelectedId(e.target.value || null); setVariantBatchEdits({}) }}>
             <option value="">— Elegí un producto —</option>
-            {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {products.map(p => <option key={p.id} value={p.id}>{p.name} {!p.active ? '(inactivo)' : ''}</option>)}
           </select>
 
           {selected && (
             <div className="flex items-end gap-3 bg-gray-50 border border-gray-200 rounded p-3">
               <div className="space-y-1 flex-1">
-                <label className="text-xs text-gray-500 uppercase tracking-wider">
-                  Precio global para todas las variantes
-                </label>
-                <input
-                  className={inputClass}
-                  type="number"
-                  placeholder="ej: 35000"
-                  value={globalPrice}
-                  onChange={e => setGlobalPrice(e.target.value)}
-                />
+                <label className="text-xs text-gray-500 uppercase tracking-wider">Precio global para todas las variantes</label>
+                <input className={inputClass} type="number" placeholder="ej: 35000" value={globalPrice} onChange={e => setGlobalPrice(e.target.value)} />
               </div>
-              <button
-                className={btnClass}
-                onClick={() => applyGlobalPrice(selected.id)}
-                disabled={loading || !globalPrice}
-              >
+              <button className={btnClass} onClick={() => applyGlobalPrice(selected.id)} disabled={loading || !globalPrice}>
                 Aplicar a todas
               </button>
             </div>
           )}
 
-
-            {Object.keys(variantBatchEdits).length > 0 && (
-              <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded px-4 py-2">
-                <span className="text-xs text-orange-600">
-                  {Object.keys(variantBatchEdits).length} variante{Object.keys(variantBatchEdits).length > 1 ? 's' : ''} con cambios sin guardar
-                </span>
-                <div className="flex gap-2">
-                  <button onClick={() => setVariantBatchEdits({})} className="text-xs text-gray-500 hover:text-gray-800 border border-gray-300 px-3 py-1.5 rounded transition">
-                    Cancelar
-                  </button>
-                  <button onClick={saveAllVariants} disabled={loading} className={btnClass}>
-                    Guardar todo
-                  </button>
-                </div>
+          {Object.keys(variantBatchEdits).length > 0 && (
+            <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded px-4 py-2">
+              <span className="text-xs text-orange-600">
+                {Object.keys(variantBatchEdits).length} variante{Object.keys(variantBatchEdits).length > 1 ? 's' : ''} con cambios sin guardar
+              </span>
+              <div className="flex gap-2">
+                <button onClick={() => setVariantBatchEdits({})} className="text-xs text-gray-500 hover:text-gray-800 border border-gray-300 px-3 py-1.5 rounded transition">
+                  Cancelar
+                </button>
+                <button onClick={saveAllVariants} disabled={loading} className={btnClass}>Guardar todo</button>
               </div>
-            )}
-
+            </div>
+          )}
 
           {selected && (
             <>
               {/* MOBILE */}
               <div className="md:hidden space-y-2">
                 {sortedVariants(selected.product_variants).map(v => (
-                  <div key={v.id} className="border border-gray-200 rounded overflow-hidden">
-                    <button
-                      className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition"
-                      onClick={() => setExpandedVariant(expandedVariant === v.id ? null : v.id)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium text-sm">{v.color}</span>
-                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">{v.size}</span>
-                        <span className="text-xs text-gray-400">Stock: {v.stock + v.stock_amoremio}</span>
-                        {v.price && (
-                          <span className="text-xs text-gray-400">· $ {Number(v.price).toLocaleString('es-AR')}</span>
-                        )}
+                  <div key={v.id} className={`border rounded overflow-hidden ${v.active ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}>
+                    <div className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition">
+                      <div className="flex items-center gap-3 flex-1">
+                        <input
+                            type="checkbox"
+                            defaultChecked={v.active === true}
+                            className="w-4 h-4 cursor-pointer"
+                            onClick={e => e.stopPropagation()}
+                            onChange={e => editVariantBatch(v.id, 'active', e.target.checked)}
+                          />
+                        <div
+                          className="flex-1 flex items-center gap-3 cursor-pointer"
+                          onClick={() => setExpandedVariant(expandedVariant === v.id ? null : v.id)}
+                        >
+                          <span className="font-medium text-sm">{v.color}</span>
+                          <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">{v.size}</span>
+                          <span className="text-xs text-gray-400">Stock: {v.stock + v.stock_amoremio}</span>
+                          {v.price && <span className="text-xs text-gray-400">· $ {Number(v.price).toLocaleString('es-AR')}</span>}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        {variantEdits[v.id] && <span className="text-xs text-orange-400 font-medium">Sin guardar</span>}
+                      <div
+                        className="flex items-center gap-3 cursor-pointer"
+                        onClick={() => setExpandedVariant(expandedVariant === v.id ? null : v.id)}
+                      >
+                        {variantBatchEdits[v.id] && <span className="text-xs text-orange-400 font-medium">Sin guardar</span>}
                         <span className="text-gray-400 text-sm">{expandedVariant === v.id ? '▲' : '▶'}</span>
                       </div>
-                    </button>
+                    </div>
                     {expandedVariant === v.id && (
-                        <div className="px-4 pb-4 pt-2 border-t border-gray-100 space-y-3">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                              <label className="text-xs text-gray-500 uppercase tracking-wider">Stock local</label>
-                              <input type="number" defaultValue={v.stock} className={inputClass} onChange={e => editVariantBatch(v.id, 'stock', Number(e.target.value))} />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-xs text-gray-500 uppercase tracking-wider">Stock Amoremio</label>
-                              <input type="number" defaultValue={v.stock_amoremio} className={inputClass} onChange={e => editVariantBatch(v.id, 'stock_amoremio', Number(e.target.value))} />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-xs text-gray-500 uppercase tracking-wider">Precio (ARS)</label>
-                              <input type="number" defaultValue={v.price ?? ''} className={inputClass} onChange={e => editVariantBatch(v.id, 'price', Number(e.target.value))} />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-xs text-gray-500 uppercase tracking-wider">Orden del color</label>
-                              <input type="number" defaultValue={v.color_position ?? 0} className={inputClass} onChange={e => editVariantBatch(v.id, 'color_position', Number(e.target.value))} />
-                            </div>
+                      <div className="px-4 pb-4 pt-2 border-t border-gray-100 space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Stock local</label>
+                            <input type="number" defaultValue={v.stock} className={inputClass} onChange={e => editVariantBatch(v.id, 'stock', Number(e.target.value))} />
                           </div>
-                          <div className="flex items-center justify-between">
-                            {variantBatchEdits[v.id] && (
-                              <span className="text-orange-400 text-xs">Sin guardar</span>
-                            )}
-                            <button onClick={() => deleteVariant(v.id)} className="text-red-400 hover:text-red-600 text-xs ml-auto">Eliminar variante</button>
+                          <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Stock Amoremio</label>
+                            <input type="number" defaultValue={v.stock_amoremio} className={inputClass} onChange={e => editVariantBatch(v.id, 'stock_amoremio', Number(e.target.value))} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Precio (ARS)</label>
+                            <input type="number" defaultValue={v.price ?? ''} className={inputClass} onChange={e => editVariantBatch(v.id, 'price', Number(e.target.value))} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider">Orden del color</label>
+                            <input type="number" defaultValue={v.color_position ?? 0} className={inputClass} onChange={e => editVariantBatch(v.id, 'color_position', Number(e.target.value))} />
                           </div>
                         </div>
-                      )}
+                        <div className="flex items-center justify-between">
+                          {variantBatchEdits[v.id] && <span className="text-orange-400 text-xs">Sin guardar</span>}
+                          <button onClick={() => deleteVariant(v.id)} className="text-red-400 hover:text-red-600 text-xs ml-auto">Eliminar variante</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -594,6 +795,7 @@ export default function AdminPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-widest text-gray-400 border-b">
+                      <th className="pb-2">Activa</th>
                       <th className="pb-2">Color</th>
                       <th className="pb-2">Talle</th>
                       <th className="pb-2">Stock</th>
@@ -605,7 +807,15 @@ export default function AdminPage() {
                   </thead>
                   <tbody>
                     {sortedVariants(selected.product_variants).map(v => (
-                      <tr key={v.id} className="border-b border-gray-100">
+                      <tr key={v.id} className={`border-b border-gray-100 ${!v.active ? 'opacity-50' : ''}`}>
+                        <td className="py-2 pr-3">
+                          <input
+                            type="checkbox"
+                            defaultChecked={v.active === true}
+                            className="w-4 h-4 cursor-pointer"
+                            onChange={e => editVariantBatch(v.id, 'active', e.target.checked)}
+                          />
+                        </td>
                         <td className="py-2 pr-3">{v.color}</td>
                         <td className="py-2 pr-3">{v.size}</td>
                         <td className="py-2 pr-3">
@@ -621,9 +831,7 @@ export default function AdminPage() {
                           <input type="number" defaultValue={v.color_position ?? 0} className={`border rounded px-2 py-1 w-16 text-sm ${variantBatchEdits[v.id]?.color_position !== undefined ? 'border-orange-300 bg-orange-50' : 'border-gray-200'}`} onChange={e => editVariantBatch(v.id, 'color_position', Number(e.target.value))} />
                         </td>
                         <td className="py-2 flex items-center gap-2">
-                          {variantBatchEdits[v.id] && (
-                            <span className="text-orange-400 text-xs">•</span>
-                          )}
+                          {variantBatchEdits[v.id] && <span className="text-orange-400 text-xs">•</span>}
                           <button onClick={() => deleteVariant(v.id)} className="text-red-400 hover:text-red-600 text-xs">✕</button>
                         </td>
                       </tr>
@@ -705,6 +913,7 @@ export default function AdminPage() {
             <label className="text-xs text-gray-500 uppercase tracking-wider">Posición (1 = primero en la tienda)</label>
             <input className={inputClass} type="number" value={newPos} onChange={e => setNewPos(Number(e.target.value))} />
           </div>
+          <p className="text-xs text-gray-400">El producto se crea inactivo — activalo cuando esté listo para publicar.</p>
           <button className={btnClass} onClick={addProduct} disabled={loading}>Crear producto</button>
         </div>
       )}

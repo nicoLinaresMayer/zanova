@@ -12,8 +12,8 @@ export async function GET() {
   const { data, error } = await supabase
     .from('products')
     .select(`
-      id, name, slug, description, position,
-      product_variants (id, color, size, stock, stock_amoremio, price, color_position),
+      id, name, slug, description, position,active,
+      product_variants (id, color, size, stock, stock_amoremio, price, color_position,active),
       product_images (id, url, color, position)
     `)
     .order('position', { ascending: true })
