@@ -40,30 +40,31 @@ export async function getProducts(): Promise<Product[]> {
   const supabase = getSupabaseClient()
 
   const { data, error } = await supabase
-    .from('products')
-    .select(`
+  .from('products')
+  .select(`
+    id,
+    slug,
+    name,
+    description,
+    product_variants!inner (
       id,
-      slug,
-      name,
-      description,
-      product_variants (
-        id,
-        color,
-        size,
-        stock,
-        stock_amoremio,
-        price,
-        color_position,
-        active
-      ),
-      product_images (
-        url,
-        color,
-        position
-      )
-    `)
-    .eq('active', true)
-    .order('position', { ascending: true })
+      color,
+      size,
+      stock,
+      stock_amoremio,
+      price,
+      color_position,
+      active
+    ),
+    product_images (
+      url,
+      color,
+      position
+    )
+  `)
+  .eq('active', true)
+  .eq('product_variants.active', true)
+  .order('position', { ascending: true })
 
   if (error) throw new Error(`Error cargando productos: ${error.message}`)
 
@@ -121,10 +122,11 @@ function mapProduct(p: any): Product {
 
   // Colores ordenados por color_position
   const colors = [...new Map(
-      (p.product_variants ?? [])
-        .sort((a: any, b: any) => (a.color_position ?? 0) - (b.color_position ?? 0))
-        .map((v: any) => [v.color, v.color_position])
-    ).keys()] as string[]
+    variants
+      .slice()
+      .sort((a, b) => (a.color_position ?? 0) - (b.color_position ?? 0))
+      .map(v => [v.color, v.color_position])
+  ).keys()] as string[]
 
   // Imágenes ordenadas por color_position primero, luego por position
   const images: ProductImage[] = (p.product_images ?? [])
