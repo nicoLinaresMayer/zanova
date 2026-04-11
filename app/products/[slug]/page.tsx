@@ -235,7 +235,7 @@ export default function ProductPage({ params }: Props) {
         </div>
 
   {/* Aviso sin stock */}
-{selectedSize && selectedVariant && selectedVariant.stock === 0 && (
+{selectedSize && selectedVariant && selectedVariant.stock === 0 && selectedVariant.stock_amoremio === 0  && (
   <div className="mt-3 p-3 bg-neutral-50 border border-neutral-200 rounded-lg space-y-2">
     <p className="text-xs text-neutral-500 uppercase tracking-[0.2em]">Talle sin stock</p>
     {notifyRequested ? (
