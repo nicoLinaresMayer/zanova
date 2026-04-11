@@ -5,6 +5,7 @@ import { ReactNode } from 'react'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import { Cormorant_Garamond } from 'next/font/google'
+import { Analytics } from "@vercel/analytics/next"
 
 
 const heroFont = Cormorant_Garamond({
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <div className="h-16"> {/* espacio igual al header */} </div>
         {children}
          <Footer />
+         <Analytics />
                 <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-TFMK8QMCR3"
           strategy="afterInteractive"
